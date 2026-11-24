@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 export type MutationInfo = {
 	Name: string,
 	IncomeMultiplier: number,
+	ScaleMultiplier: number?,
 	Chance: number, -- percentage out of 100
 	Color: Color3,
 	Material: Enum.Material,
@@ -34,9 +35,32 @@ local Mutations: { [string]: MutationInfo } = {
 		Color = Color3.fromRGB(35, 20, 55),
 		Material = Enum.Material.ForceField,
 	},
+	Celestial = {
+		Name = "Celestial",
+		IncomeMultiplier = 8,
+		Chance = 0.25,
+		Color = Color3.fromRGB(120, 245, 255),
+		Material = Enum.Material.Neon,
+	},
+	["Semi-Titanic"] = {
+		Name = "Semi-Titanic",
+		IncomeMultiplier = 15,
+		ScaleMultiplier = 4.5,
+		Chance = 0.35,
+		Color = Color3.fromRGB(255, 145, 35),
+		Material = Enum.Material.SmoothPlastic,
+	},
+	Titanic = {
+		Name = "Titanic",
+		IncomeMultiplier = 50,
+		ScaleMultiplier = 9.0,
+		Chance = 0.08,
+		Color = Color3.fromRGB(255, 45, 75),
+		Material = Enum.Material.SmoothPlastic,
+	},
 }
 
-local Order: { string } = { "Shadow", "Neon", "Golden" }
+local Order: { string } = { "Titanic", "Semi-Titanic", "Celestial", "Shadow", "Neon", "Golden" }
 local rng = Random.new()
 
 local MutationData = {

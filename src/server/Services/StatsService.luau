@@ -144,7 +144,7 @@ function StatsService.AddTrainedSpeed(player: Player, delta: number)
 	if not profile or delta <= 0 then
 		return
 	end
-	profile.TrainedSpeed = math.clamp(math.floor((profile.TrainedSpeed + delta) * 100 + 0.5) / 100, 0, 999999999)
+	profile.TrainedSpeed = math.clamp(math.floor((profile.TrainedSpeed + delta) * 100 + 0.5) / 100, 0, 999999999999)
 	player:SetAttribute("TrainedSpeed", profile.TrainedSpeed)
 	DataService.MarkDirty(player)
 	StatsService.Refresh(player)

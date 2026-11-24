@@ -64,6 +64,10 @@ local ZONE_BOUNDS: { [string]: { MinZ: number, MaxZ: number, RequiredSpeedStat: 
 	Zone6 = { MinZ = -950, MaxZ = -800, RequiredSpeedStat = 3500000, WalkSpeed = 23.0, ChaseSpeed = 33.5 },
 	Zone7 = { MinZ = -1100, MaxZ = -950, RequiredSpeedStat = 18000000, WalkSpeed = 25.0, ChaseSpeed = 36.5 },
 	Zone8 = { MinZ = -1255, MaxZ = -1100, RequiredSpeedStat = 90000000, WalkSpeed = 27.0, ChaseSpeed = 39.5 },
+	Zone9 = { MinZ = -1400, MaxZ = -1255, RequiredSpeedStat = 450000000, WalkSpeed = 29.0, ChaseSpeed = 42.5 },
+	Zone10 = { MinZ = -1550, MaxZ = -1400, RequiredSpeedStat = 2200000000, WalkSpeed = 31.0, ChaseSpeed = 45.5 },
+	Zone11 = { MinZ = -1700, MaxZ = -1550, RequiredSpeedStat = 12000000000, WalkSpeed = 33.0, ChaseSpeed = 48.5 },
+	Zone12 = { MinZ = -1855, MaxZ = -1700, RequiredSpeedStat = 65000000000, WalkSpeed = 36.0, ChaseSpeed = 52.0 },
 }
 
 local EnemyService = {}
@@ -187,6 +191,46 @@ local WARDEN_THEMES: { [string]: WardenTheme } = {
 		AccentColor = Color3.fromRGB(0, 245, 225),
 		EyeColor = Color3.fromRGB(0, 245, 225),
 		Scale = 1.62,
+	},
+	Zone9 = {
+		Title = "⚡ THOR GUARD",
+		TagColor = Color3.fromRGB(120, 215, 255),
+		SkinColor = Color3.fromRGB(215, 180, 145),
+		ShirtColor = Color3.fromRGB(45, 65, 115),
+		PantsColor = Color3.fromRGB(28, 36, 62),
+		AccentColor = Color3.fromRGB(120, 215, 255),
+		EyeColor = Color3.fromRGB(165, 245, 255),
+		Scale = 1.66,
+	},
+	Zone10 = {
+		Title = "🔱 TITAN WARDEN",
+		TagColor = Color3.fromRGB(255, 175, 55),
+		SkinColor = Color3.fromRGB(195, 155, 95),
+		ShirtColor = Color3.fromRGB(145, 105, 35),
+		PantsColor = Color3.fromRGB(75, 55, 25),
+		AccentColor = Color3.fromRGB(255, 205, 65),
+		EyeColor = Color3.fromRGB(255, 195, 45),
+		Scale = 1.72,
+	},
+	Zone11 = {
+		Title = "🐉 DRAGON GUARD",
+		TagColor = Color3.fromRGB(255, 65, 85),
+		SkinColor = Color3.fromRGB(115, 32, 38),
+		ShirtColor = Color3.fromRGB(65, 18, 24),
+		PantsColor = Color3.fromRGB(32, 12, 16),
+		AccentColor = Color3.fromRGB(255, 95, 45),
+		EyeColor = Color3.fromRGB(255, 205, 45),
+		Scale = 1.78,
+	},
+	Zone12 = {
+		Title = "👑 BATHALA SENTINEL",
+		TagColor = Color3.fromRGB(255, 235, 115),
+		SkinColor = Color3.fromRGB(255, 215, 115),
+		ShirtColor = Color3.fromRGB(42, 32, 85),
+		PantsColor = Color3.fromRGB(25, 18, 55),
+		AccentColor = Color3.fromRGB(165, 255, 255),
+		EyeColor = Color3.fromRGB(255, 255, 255),
+		Scale = 1.85,
 	},
 }
 

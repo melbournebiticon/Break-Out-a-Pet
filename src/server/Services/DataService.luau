@@ -86,7 +86,7 @@ local function migrateAndSanitize(raw: any): Profile
 	local money = if typeof(raw.Money) == "number" and raw.Money == raw.Money then math.max(0, math.floor(raw.Money)) else Config.StartingMoney
 	local speedLevel = if typeof(raw.SpeedLevel) == "number" then math.clamp(math.floor(raw.SpeedLevel), 0, ShopData.Speed.MaxLevel) else 0
 	local trainedSpeed = if typeof(raw.TrainedSpeed) == "number" and raw.TrainedSpeed == raw.TrainedSpeed
-		then math.clamp(raw.TrainedSpeed, 0, 999999999)
+		then math.clamp(raw.TrainedSpeed, 0, 999999999999)
 		else (speedLevel * ShopData.Speed.SpeedPerLevel)
 	local maxAllowedSlots = Config.MaxPetSlots + Config.ExtraPassPetSlots
 	local petSlots = if typeof(raw.PetSlots) == "number" then math.clamp(math.floor(raw.PetSlots), Config.StartingPetSlots, maxAllowedSlots) else Config.StartingPetSlots

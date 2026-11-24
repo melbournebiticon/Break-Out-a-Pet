@@ -10,9 +10,9 @@ local PetData = require(script.Parent.PetData)
 
 local ShopData = {
 	Speed = {
-		MaxLevel = 10,
+		MaxLevel = 20,
 		SpeedPerLevel = 0.8, -- kept for backward compatibility
-		BaseGainPerSec = 15, -- +15 Speed/sec at Tier 0 (grind up to 900 -> 10K -> 40K -> 170K+!)
+		BaseGainPerSec = 15, -- +15 Speed/sec at Tier 0
 		GainPerLevel = 50,
 		BasePrice = 350,
 		PriceGrowth = 4.2,
@@ -28,6 +28,16 @@ local ShopData = {
 			[8] = 350000,
 			[9] = 1400000,
 			[10] = 5500000,
+			[11] = 18000000,
+			[12] = 55000000,
+			[13] = 160000000,
+			[14] = 450000000,
+			[15] = 1200000000,
+			[16] = 3200000000,
+			[17] = 8500000000,
+			[18] = 22000000000,
+			[19] = 55000000000,
+			[20] = 150000000000,
 		},
 		TierPrices = {
 			[0] = 350,
@@ -40,6 +50,16 @@ local ShopData = {
 			[7] = 16000000,
 			[8] = 75000000,
 			[9] = 350000000,
+			[10] = 1500000000,
+			[11] = 6500000000,
+			[12] = 28000000000,
+			[13] = 120000000000,
+			[14] = 500000000000,
+			[15] = 2200000000000,
+			[16] = 9500000000000,
+			[17] = 40000000000000,
+			[18] = 180000000000000,
+			[19] = 750000000000000,
 		},
 	},
 	TreadmillTiers = {
@@ -153,6 +173,106 @@ local ShopData = {
 			AccentColor = Color3.fromRGB(255, 55, 145),
 			RunSpeed = 46,
 		},
+		[11] = {
+			Name = "Valhalla Thunder Track",
+			PlatformColor = Color3.fromRGB(45, 58, 95),
+			PlatformMat = Enum.Material.Marble,
+			BeltColor = Color3.fromRGB(22, 28, 48),
+			RailColor = Color3.fromRGB(120, 215, 255),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(80, 200, 255),
+			RunSpeed = 50,
+		},
+		[12] = {
+			Name = "Olympus Titan Strider",
+			PlatformColor = Color3.fromRGB(185, 145, 55),
+			PlatformMat = Enum.Material.Marble,
+			BeltColor = Color3.fromRGB(28, 22, 16),
+			RailColor = Color3.fromRGB(255, 215, 95),
+			RailMat = Enum.Material.Metal,
+			AccentColor = Color3.fromRGB(255, 165, 45),
+			RunSpeed = 54,
+		},
+		[13] = {
+			Name = "Dragon Emperor Runner",
+			PlatformColor = Color3.fromRGB(95, 18, 24),
+			PlatformMat = Enum.Material.Basalt,
+			BeltColor = Color3.fromRGB(24, 12, 14),
+			RailColor = Color3.fromRGB(255, 65, 65),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 75, 45),
+			RunSpeed = 58,
+		},
+		[14] = {
+			Name = "Astral Void Treadmill",
+			PlatformColor = Color3.fromRGB(28, 16, 58),
+			PlatformMat = Enum.Material.ForceField,
+			BeltColor = Color3.fromRGB(12, 8, 26),
+			RailColor = Color3.fromRGB(190, 95, 255),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(180, 85, 255),
+			RunSpeed = 62,
+		},
+		[15] = {
+			Name = "Phoenix Flare Accelerator",
+			PlatformColor = Color3.fromRGB(125, 42, 18),
+			PlatformMat = Enum.Material.Metal,
+			BeltColor = Color3.fromRGB(28, 14, 10),
+			RailColor = Color3.fromRGB(255, 145, 35),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 185, 45),
+			RunSpeed = 66,
+		},
+		[16] = {
+			Name = "Semi-Titanic Hyper Belt",
+			PlatformColor = Color3.fromRGB(65, 35, 18),
+			PlatformMat = Enum.Material.DiamondPlate,
+			BeltColor = Color3.fromRGB(20, 14, 10),
+			RailColor = Color3.fromRGB(255, 125, 25),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 145, 35),
+			RunSpeed = 70,
+		},
+		[17] = {
+			Name = "Titanic Crimson Engine",
+			PlatformColor = Color3.fromRGB(85, 14, 28),
+			PlatformMat = Enum.Material.Metal,
+			BeltColor = Color3.fromRGB(22, 8, 14),
+			RailColor = Color3.fromRGB(255, 45, 95),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 45, 75),
+			RunSpeed = 74,
+		},
+		[18] = {
+			Name = "Cosmic Quantum Runner",
+			PlatformColor = Color3.fromRGB(18, 42, 68),
+			PlatformMat = Enum.Material.Marble,
+			BeltColor = Color3.fromRGB(8, 18, 32),
+			RailColor = Color3.fromRGB(0, 245, 225),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(0, 255, 235),
+			RunSpeed = 78,
+		},
+		[19] = {
+			Name = "Godly Celestial Warp",
+			PlatformColor = Color3.fromRGB(45, 65, 95),
+			PlatformMat = Enum.Material.ForceField,
+			BeltColor = Color3.fromRGB(16, 22, 38),
+			RailColor = Color3.fromRGB(165, 255, 255),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(165, 255, 255),
+			RunSpeed = 82,
+		},
+		[20] = {
+			Name = "Bathala Infinity Throne",
+			PlatformColor = Color3.fromRGB(255, 215, 75),
+			PlatformMat = Enum.Material.Neon,
+			BeltColor = Color3.fromRGB(18, 16, 28),
+			RailColor = Color3.fromRGB(255, 255, 255),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 235, 120),
+			RunSpeed = 88,
+		},
 	},
 	PetSlots = {
 		Prices = { 2500, 15000, 75000, 350000, 1500000, 6000000, 25000000, 100000000, 400000000 },
@@ -171,7 +291,7 @@ function ShopData.StatToPhysicalWalkSpeed(speedStat: number): number
 		return 16
 	end
 	local ratio = math.max(1, speedStat / 16)
-	return math.clamp(16 + math.log10(ratio) * 7.2, 16, 74)
+	return math.clamp(16 + math.log10(ratio) * 6.5, 16, 82)
 end
 
 function ShopData.GetTrainerGainPerSec(trainerLevel: number): number

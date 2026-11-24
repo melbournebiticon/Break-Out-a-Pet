@@ -103,6 +103,38 @@ local ZONES: { ZoneMeta } = {
 		MaxZ = -1100,
 		Color = Color3.fromRGB(0, 245, 225),
 	},
+	{
+		Id = "Zone9",
+		Title = "⚔️ ZONE 9 — VALHALLA COLISEUM",
+		Rarities = "Mecha Lion, Void Phoenix, Semi-Titanic Typhon • Speed 450M+",
+		MinZ = -1400,
+		MaxZ = -1255,
+		Color = Color3.fromRGB(120, 215, 255),
+	},
+	{
+		Id = "Zone10",
+		Title = "🔱 ZONE 10 — OLYMPUS TITAN REALM",
+		Rarities = "Semi-Titanic Hydra/Golem, Titanic Kalabaw (8.2x) • Speed 2.2B+",
+		MinZ = -1550,
+		MaxZ = -1400,
+		Color = Color3.fromRGB(255, 165, 45),
+	},
+	{
+		Id = "Zone11",
+		Title = "🐉 ZONE 11 — DRAGON EMPEROR CITADEL",
+		Rarities = "Titanic Agila (9x), Bakunawa (10x), Celestial Dragon (10.5x) • Speed 12B+",
+		MinZ = -1700,
+		MaxZ = -1550,
+		Color = Color3.fromRGB(255, 55, 85),
+	},
+	{
+		Id = "Zone12",
+		Title = "👑 ZONE 12 — BATHALA INFINITY THRONE",
+		Rarities = "Titanic Sarimanok (11x), Godly Bathala & Astral Leviathan • Speed 65B+",
+		MinZ = -1855,
+		MaxZ = -1700,
+		Color = Color3.fromRGB(255, 225, 95),
+	},
 }
 
 local function postToChat(text: string, color: Color3)

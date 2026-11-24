@@ -56,6 +56,19 @@ local Palettes: { [string]: SpeciesPalette } = {
 	mini_dragon = { Main = Color3.fromRGB(215, 45, 65), Accent = Color3.fromRGB(255, 185, 45), Feature = "dragon" },
 	shadow_kitsune = { Main = Color3.fromRGB(35, 25, 55), Accent = Color3.fromRGB(170, 85, 255), Feature = "kitsune" },
 	rainbow_unicorn = { Main = Color3.fromRGB(250, 245, 255), Accent = Color3.fromRGB(255, 120, 220), Feature = "unicorn" },
+
+	mecha_lion = { Main = Color3.fromRGB(215, 165, 45), Accent = Color3.fromRGB(0, 225, 255), Feature = "dragon" },
+	void_phoenix = { Main = Color3.fromRGB(45, 25, 75), Accent = Color3.fromRGB(255, 75, 185), Feature = "phoenix" },
+	semi_typhon = { Main = Color3.fromRGB(55, 145, 195), Accent = Color3.fromRGB(165, 245, 255), Feature = "dragon" },
+	semi_hydra = { Main = Color3.fromRGB(35, 135, 75), Accent = Color3.fromRGB(145, 255, 95), Feature = "dragon" },
+	semi_golem = { Main = Color3.fromRGB(125, 95, 65), Accent = Color3.fromRGB(255, 145, 35), Feature = "capybara" },
+	titanic_kalabaw = { Main = Color3.fromRGB(58, 52, 55), Accent = Color3.fromRGB(255, 205, 55), Feature = "dragon" },
+	titanic_agila = { Main = Color3.fromRGB(135, 92, 55), Accent = Color3.fromRGB(255, 215, 65), Feature = "phoenix" },
+	titanic_bakunawa = { Main = Color3.fromRGB(22, 32, 68), Accent = Color3.fromRGB(0, 245, 225), Feature = "dragon" },
+	titanic_dragon = { Main = Color3.fromRGB(185, 28, 42), Accent = Color3.fromRGB(255, 205, 45), Feature = "dragon" },
+	titanic_sarimanok = { Main = Color3.fromRGB(255, 195, 35), Accent = Color3.fromRGB(255, 55, 145), Feature = "phoenix" },
+	godly_bathala = { Main = Color3.fromRGB(255, 235, 130), Accent = Color3.fromRGB(120, 255, 255), Feature = "unicorn" },
+	godly_astralis = { Main = Color3.fromRGB(25, 35, 85), Accent = Color3.fromRGB(165, 255, 255), Feature = "dragon" },
 }
 
 local function makePart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance, shape: Enum.PartType?): Part
@@ -97,9 +110,10 @@ function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: C
 	}
 
 	local mutInfo = MutationData.Get(mutation)
-	local mainColor = if mutInfo then mutInfo.Color else palette.Main
+	local isSizeMutation = mutInfo ~= nil and mutInfo.ScaleMultiplier ~= nil
+	local mainColor = if mutInfo and not isSizeMutation then mutInfo.Color else palette.Main
 	local accentColor = palette.Accent
-	local baseMat = if mutInfo then mutInfo.Material else Enum.Material.SmoothPlastic
+	local baseMat = if mutInfo and not isSizeMutation then mutInfo.Material else Enum.Material.SmoothPlastic
 
 	local model = Instance.new("Model")
 	model.Name = `PetModel_{petId}`
@@ -209,6 +223,23 @@ function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: C
 		if desc:IsA("BasePart") and desc ~= body then
 			weldTo(desc, body)
 		end
+	end
+
+	-- Apply Semi-Titanic (4.5x) or Titanic (9.0x) scale around centerCFrame!
+	local baseScale = if pet and typeof(pet.Scale) == "number" and pet.Scale > 0 then pet.Scale else 1
+	local mutScale = if mutInfo and typeof(mutInfo.ScaleMultiplier) == "number" then mutInfo.ScaleMultiplier else 1
+	local scale = math.min(11.5, baseScale * mutScale)
+	if math.abs(scale - 1) > 0.01 then
+		local pivotPos = centerCFrame.Position
+		for _, desc in model:GetDescendants() do
+			if desc:IsA("BasePart") then
+				desc.Size *= scale
+				local rel = desc.CFrame.Position - pivotPos
+				local rot = desc.CFrame - desc.CFrame.Position
+				desc.CFrame = CFrame.new(pivotPos + rel * scale) * rot
+			end
+		end
+		model:SetAttribute("PetScale", scale)
 	end
 
 	return model

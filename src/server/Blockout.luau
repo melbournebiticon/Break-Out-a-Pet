@@ -323,7 +323,7 @@ function Blockout.EnsureMap()
 	end
 
 	local existingPrison = workspace:FindFirstChild("Prison")
-	if existingPrison and not existingPrison:GetAttribute("RedesignedV18") then
+	if existingPrison and not existingPrison:GetAttribute("RedesignedV19") then
 		existingPrison:Destroy()
 		for _, folderName in { "BasePlots", "Lobby", "PatrolPoints", "EnemySpawns", "Enemies" } do
 			local f = workspace:FindFirstChild(folderName)
@@ -333,12 +333,12 @@ function Blockout.EnsureMap()
 		end
 	end
 
-	-- 1) 8-ZONE CORRIDOR (84 studs wide x 1200 studs long, Z from -50 to -1250!)
+	-- 1) 12-ZONE CORRIDOR (84 studs wide x 1800 studs long, Z from -50 to -1850!)
 	local prison = workspace:FindFirstChild("Prison")
 	if not prison then
 		prison = Instance.new("Folder")
 		prison.Name = "Prison"
-		prison:SetAttribute("RedesignedV18", true)
+		prison:SetAttribute("RedesignedV19", true)
 		prison.Parent = workspace
 
 		local safeLine = makePart("SafeZoneLine", Vector3.new(84, 0.35, 3.5), Vector3.new(0, 0.9, -47.5), Color3.fromRGB(60, 255, 120), prison, Enum.Material.Neon)
@@ -347,12 +347,12 @@ function Blockout.EnsureMap()
 
 		buildSpeedKaratula(prison, Vector3.new(54, 0.5, -45))
 
-		-- Corridor side walls spanning the full 1200-stud length (Z = -50 to -1250, center Z = -650)
-		makePart("WallLeft", Vector3.new(3, 14, 1202), Vector3.new(-43.5, 7.5, -650), Color3.fromRGB(145, 105, 65), prison, Enum.Material.Brick)
-		makePart("WallLeftTop", Vector3.new(3.4, 1.2, 1202), Vector3.new(-43.5, 15.1, -650), Color3.fromRGB(85, 175, 85), prison, Enum.Material.Grass)
-		makePart("WallRight", Vector3.new(3, 14, 1202), Vector3.new(43.5, 7.5, -650), Color3.fromRGB(145, 105, 65), prison, Enum.Material.Brick)
-		makePart("WallRightTop", Vector3.new(3.4, 1.2, 1202), Vector3.new(43.5, 15.1, -650), Color3.fromRGB(85, 175, 85), prison, Enum.Material.Grass)
-		makePart("WallBack", Vector3.new(90, 14, 3), Vector3.new(0, 7.5, -1251), Color3.fromRGB(60, 55, 75), prison, Enum.Material.Brick)
+		-- Corridor side walls spanning the full 1800-stud length (Z = -50 to -1850, center Z = -950)
+		makePart("WallLeft", Vector3.new(3, 14, 1802), Vector3.new(-43.5, 7.5, -950), Color3.fromRGB(145, 105, 65), prison, Enum.Material.Brick)
+		makePart("WallLeftTop", Vector3.new(3.4, 1.2, 1802), Vector3.new(-43.5, 15.1, -950), Color3.fromRGB(85, 175, 85), prison, Enum.Material.Grass)
+		makePart("WallRight", Vector3.new(3, 14, 1802), Vector3.new(43.5, 7.5, -950), Color3.fromRGB(145, 105, 65), prison, Enum.Material.Brick)
+		makePart("WallRightTop", Vector3.new(3.4, 1.2, 1802), Vector3.new(43.5, 15.1, -950), Color3.fromRGB(85, 175, 85), prison, Enum.Material.Grass)
+		makePart("WallBack", Vector3.new(90, 14, 3), Vector3.new(0, 7.5, -1851), Color3.fromRGB(60, 55, 75), prison, Enum.Material.Brick)
 
 		local zones = {
 			{
@@ -433,6 +433,46 @@ function Blockout.EnsureMap()
 				color = Color3.fromRGB(35, 40, 75),
 				mat = Enum.Material.Marble,
 				accent = Color3.fromRGB(0, 245, 225),
+				lasers = false,
+			},
+			{
+				name = "Zone9",
+				title = "⚔️ ZONE 9: VALHALLA COLISEUM (Speed 450M+)",
+				zCenter = -1325,
+				archZ = -1250,
+				color = Color3.fromRGB(58, 68, 95),
+				mat = Enum.Material.Marble,
+				accent = Color3.fromRGB(120, 215, 255),
+				lasers = false,
+			},
+			{
+				name = "Zone10",
+				title = "🔱 ZONE 10: OLYMPUS TITAN REALM (Speed 2.2B+)",
+				zCenter = -1475,
+				archZ = -1400,
+				color = Color3.fromRGB(145, 115, 65),
+				mat = Enum.Material.Marble,
+				accent = Color3.fromRGB(255, 165, 45),
+				lasers = false,
+			},
+			{
+				name = "Zone11",
+				title = "🐉 ZONE 11: DRAGON EMPEROR CITADEL (Speed 12B+)",
+				zCenter = -1625,
+				archZ = -1550,
+				color = Color3.fromRGB(85, 25, 32),
+				mat = Enum.Material.Basalt,
+				accent = Color3.fromRGB(255, 55, 85),
+				lasers = false,
+			},
+			{
+				name = "Zone12",
+				title = "👑 ZONE 12: BATHALA INFINITY THRONE (Speed 65B+)",
+				zCenter = -1775,
+				archZ = -1700,
+				color = Color3.fromRGB(30, 28, 65),
+				mat = Enum.Material.Neon,
+				accent = Color3.fromRGB(255, 225, 95),
 				lasers = false,
 			},
 		}
@@ -554,6 +594,10 @@ function Blockout.EnsureMap()
 		Zone6 = -875,
 		Zone7 = -1025,
 		Zone8 = -1175,
+		Zone9 = -1325,
+		Zone10 = -1475,
+		Zone11 = -1625,
+		Zone12 = -1775,
 	}
 
 	for zoneName, zc in zoneCenters do
@@ -596,6 +640,14 @@ function Blockout.EnsureMap()
 		{ name = "Zone7_Dog", enemyType = "Dog", zone = "Zone7", pos = Vector3.new(22, 3, -1046), speedMult = 1.65 },
 		{ name = "Zone8_Warden", enemyType = "Warden", zone = "Zone8", pos = Vector3.new(-22, 3, -1154), speedMult = 2.0 },
 		{ name = "Zone8_Dog", enemyType = "Dog", zone = "Zone8", pos = Vector3.new(22, 3, -1196), speedMult = 1.85 },
+		{ name = "Zone9_Warden", enemyType = "Warden", zone = "Zone9", pos = Vector3.new(-22, 3, -1304), speedMult = 2.1 },
+		{ name = "Zone9_Dog", enemyType = "Dog", zone = "Zone9", pos = Vector3.new(22, 3, -1346), speedMult = 1.95 },
+		{ name = "Zone10_Warden", enemyType = "Warden", zone = "Zone10", pos = Vector3.new(-22, 3, -1454), speedMult = 2.2 },
+		{ name = "Zone10_Dog", enemyType = "Dog", zone = "Zone10", pos = Vector3.new(22, 3, -1496), speedMult = 2.05 },
+		{ name = "Zone11_Warden", enemyType = "Warden", zone = "Zone11", pos = Vector3.new(-22, 3, -1604), speedMult = 2.3 },
+		{ name = "Zone11_Dog", enemyType = "Dog", zone = "Zone11", pos = Vector3.new(22, 3, -1646), speedMult = 2.15 },
+		{ name = "Zone12_Warden", enemyType = "Warden", zone = "Zone12", pos = Vector3.new(-22, 3, -1754), speedMult = 2.4 },
+		{ name = "Zone12_Dog", enemyType = "Dog", zone = "Zone12", pos = Vector3.new(22, 3, -1796), speedMult = 2.25 },
 	}
 
 	for _, info in spawns do

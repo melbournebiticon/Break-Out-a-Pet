@@ -22,6 +22,9 @@ local Config = {
 		Legendary = 18,
 		Mythic = 25,
 		Secret = 35,
+		SemiTitanic = 45,
+		Titanic = 60,
+		Godly = 75,
 	} :: { [string]: number },
 
 	-- Base & Economy

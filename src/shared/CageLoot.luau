@@ -8,16 +8,17 @@ local PetData = require(script.Parent.PetData)
 local EventData = require(script.Parent.EventData)
 
 local Zones: { [string]: { [string]: number } } = {
-	-- Zone 1: Bukid & Sabungan (Total = 100)
+	-- Zone 1: Bukid & Sabungan (Total = 100 | 0.05% Jackpot Titanic!)
 	Zone1 = {
 		chicken = 28,
 		duckling = 20,
 		puspin = 16,
 		aspin = 16,
 		bunny = 10,
-		kalabaw = 10,
+		kalabaw = 9.95,
+		titanic_kalabaw = 0.05,
 	},
-	-- Zone 2: Palengke & Tiangge (Total = 100)
+	-- Zone 2: Palengke & Tiangge (Total = 100 | 0.10% Titanic!)
 	Zone2 = {
 		aspin = 20,
 		turtle = 18,
@@ -26,9 +27,10 @@ local Zones: { [string]: { [string]: number } } = {
 		bangus = 12,
 		golden_pig = 10,
 		alimango = 8,
-		ninja_cat = 6,
+		ninja_cat = 5.9,
+		titanic_kalabaw = 0.1,
 	},
-	-- Zone 3: Hacienda Compound (Total = 100)
+	-- Zone 3: Hacienda Compound (Total = 100 | 0.15% Titanic!)
 	Zone3 = {
 		turtle = 18,
 		golden_pig = 18,
@@ -38,9 +40,10 @@ local Zones: { [string]: { [string]: number } } = {
 		kalabaw = 8,
 		tarsier = 6,
 		chameleon = 6,
-		pawikan = 4,
+		pawikan = 3.85,
+		titanic_kalabaw = 0.15,
 	},
-	-- Zone 4: Bohol & Palawan Gubat (Total = 100)
+	-- Zone 4: Bohol & Palawan Gubat (Total = 100 | 0.25% Titanic!)
 	Zone4 = {
 		golden_pig = 18,
 		tarsier = 16,
@@ -49,9 +52,10 @@ local Zones: { [string]: { [string]: number } } = {
 		chameleon = 10,
 		agila = 10,
 		butanding = 10,
-		phoenix = 6,
+		phoenix = 5.75,
+		titanic_agila = 0.25,
 	},
-	-- Zone 5: Bulkang Mayon Ridge (Total = 100)
+	-- Zone 5: Bulkang Mayon Ridge (Total = 100 | 0.35% Titanic!)
 	Zone5 = {
 		tarsier = 18,
 		agila = 18,
@@ -60,9 +64,10 @@ local Zones: { [string]: { [string]: number } } = {
 		chameleon = 10,
 		butanding = 10,
 		sigbin = 10,
-		minokawa = 6,
+		minokawa = 5.65,
+		titanic_bakunawa = 0.35,
 	},
-	-- Zone 6: Intramuros Royal Vault (Total = 100)
+	-- Zone 6: Intramuros Royal Vault (Total = 100 | 0.50% Titanic!)
 	Zone6 = {
 		tamaraw = 18,
 		agila = 16,
@@ -71,9 +76,10 @@ local Zones: { [string]: { [string]: number } } = {
 		sigbin = 14,
 		minokawa = 12,
 		tikbalang = 6,
-		bakunawa = 4,
+		bakunawa = 3.5,
+		titanic_sarimanok = 0.5,
 	},
-	-- Zone 7: Mythical Sanctuary (Total = 100)
+	-- Zone 7: Mythical Sanctuary (Total = 100 | 0.75% Titanic!)
 	Zone7 = {
 		hamster = 10,
 		raccoon = 20,
@@ -81,9 +87,10 @@ local Zones: { [string]: { [string]: number } } = {
 		octopus = 18,
 		diamond_capybara = 12,
 		wolf = 10,
-		mini_dragon = 8,
+		mini_dragon = 7.25,
+		titanic_dragon = 0.75,
 	},
-	-- Zone 8: Celestial Vault (Total = 100)
+	-- Zone 8: Celestial Vault (Total = 100 | 1.00% Titanic!)
 	Zone8 = {
 		panda = 15,
 		octopus = 15,
@@ -91,7 +98,52 @@ local Zones: { [string]: { [string]: number } } = {
 		wolf = 18,
 		mini_dragon = 18,
 		shadow_kitsune = 7,
-		rainbow_unicorn = 5,
+		rainbow_unicorn = 4,
+		titanic_dragon = 1.0,
+	},
+	-- Zone 9: Valhalla Coliseum (Total = 100 | 1.50% Titanic!)
+	Zone9 = {
+		wolf = 20,
+		mini_dragon = 22,
+		shadow_kitsune = 18,
+		rainbow_unicorn = 14,
+		mecha_lion = 14,
+		void_phoenix = 6.5,
+		semi_typhon = 4,
+		titanic_kalabaw = 1.5,
+	},
+	-- Zone 10: Olympus Titan Realm (Total = 100)
+	Zone10 = {
+		shadow_kitsune = 18,
+		rainbow_unicorn = 16,
+		mecha_lion = 20,
+		void_phoenix = 18,
+		semi_typhon = 14,
+		semi_hydra = 8,
+		semi_golem = 4,
+		titanic_kalabaw = 2,
+	},
+	-- Zone 11: Dragon Emperor Citadel (Total = 100)
+	Zone11 = {
+		void_phoenix = 18,
+		semi_typhon = 18,
+		semi_hydra = 18,
+		semi_golem = 16,
+		titanic_kalabaw = 12,
+		titanic_agila = 10,
+		titanic_bakunawa = 5,
+		titanic_dragon = 3,
+	},
+	-- Zone 12: Bathala Infinity Throne (Total = 100)
+	Zone12 = {
+		semi_golem = 16,
+		titanic_kalabaw = 18,
+		titanic_agila = 18,
+		titanic_bakunawa = 18,
+		titanic_dragon = 14,
+		titanic_sarimanok = 10,
+		godly_bathala = 4,
+		godly_astralis = 2,
 	},
 }
 

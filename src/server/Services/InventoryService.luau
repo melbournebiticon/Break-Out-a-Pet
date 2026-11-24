@@ -147,9 +147,14 @@ local function syncBackpackPetTools(player: Player, pets: { OwnedPet })
 				handle.Parent = tool
 
 				local visual = PetVisuals.BuildModel(owned.PetId, owned.Mutation, handle.CFrame * CFrame.new(0, 0.4, 0))
+				local petScaleAttr = visual:GetAttribute("PetScale")
+				local petScale = if typeof(petScaleAttr) == "number" and petScaleAttr > 0
+					then petScaleAttr
+					else (if typeof(info.Scale) == "number" and info.Scale > 0 then info.Scale else 1)
+				local toolScaleFactor = 0.45 / petScale
 				for _, desc in visual:GetDescendants() do
 					if desc:IsA("BasePart") then
-						desc.Size *= 0.45
+						desc.Size *= toolScaleFactor
 						desc.Anchored = false
 						desc.Massless = true
 					end

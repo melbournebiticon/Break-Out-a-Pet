@@ -29,6 +29,21 @@ local Tiers: { [string]: TierRule } = {
 		SuccessChance = 0.20,
 		Cost = 250000,
 	},
+	Mythic = {
+		NextRarity = "Secret",
+		SuccessChance = 0.15,
+		Cost = 2500000,
+	},
+	Secret = {
+		NextRarity = "SemiTitanic",
+		SuccessChance = 0.12,
+		Cost = 25000000,
+	},
+	SemiTitanic = {
+		NextRarity = "Titanic",
+		SuccessChance = 0.10,
+		Cost = 250000000,
+	},
 }
 
 local FusionData = {

@@ -46,9 +46,27 @@ local Data: { [string]: RarityInfo } = {
 		CarrySpeedMultiplier = 0.50,
 		SortOrder = 6,
 	},
+	SemiTitanic = {
+		Name = "SemiTitanic",
+		Color = Color3.fromRGB(255, 145, 35),
+		CarrySpeedMultiplier = 0.45,
+		SortOrder = 7,
+	},
+	Titanic = {
+		Name = "Titanic",
+		Color = Color3.fromRGB(255, 45, 75),
+		CarrySpeedMultiplier = 0.40,
+		SortOrder = 8,
+	},
+	Godly = {
+		Name = "Godly",
+		Color = Color3.fromRGB(165, 255, 255),
+		CarrySpeedMultiplier = 0.35,
+		SortOrder = 9,
+	},
 }
 
-local Order: { string } = { "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret" }
+local Order: { string } = { "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret", "SemiTitanic", "Titanic", "Godly" }
 
 local Rarities = {}
 Rarities.Data = Data
