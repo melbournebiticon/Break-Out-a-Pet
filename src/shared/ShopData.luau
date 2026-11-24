@@ -11,11 +11,36 @@ local PetData = require(script.Parent.PetData)
 local ShopData = {
 	Speed = {
 		MaxLevel = 10,
-		SpeedPerLevel = 0.8, -- kept for backward compatibility; also used as bonus speed per trainer tier
-		BaseGainPerSec = 0.20, -- +0.20 WalkSpeed per second at Trainer Tier 0
-		GainPerLevel = 0.18, -- extra +0.18 WalkSpeed/sec per Trainer Tier upgrade
-		BasePrice = 200,
-		PriceGrowth = 1.85,
+		SpeedPerLevel = 0.8, -- kept for backward compatibility
+		BaseGainPerSec = 15, -- +15 Speed/sec at Tier 0 (grind up to 900 -> 10K -> 40K -> 170K+!)
+		GainPerLevel = 50,
+		BasePrice = 350,
+		PriceGrowth = 4.2,
+		TierGains = {
+			[0] = 15,
+			[1] = 45,
+			[2] = 150,
+			[3] = 520,
+			[4] = 1800,
+			[5] = 6500,
+			[6] = 24000,
+			[7] = 90000,
+			[8] = 350000,
+			[9] = 1400000,
+			[10] = 5500000,
+		},
+		TierPrices = {
+			[0] = 350,
+			[1] = 1800,
+			[2] = 8500,
+			[3] = 40000,
+			[4] = 180000,
+			[5] = 800000,
+			[6] = 3500000,
+			[7] = 16000000,
+			[8] = 75000000,
+			[9] = 350000000,
+		},
 	},
 	TreadmillTiers = {
 		[0] = {
@@ -130,7 +155,7 @@ local ShopData = {
 		},
 	},
 	PetSlots = {
-		Prices = { 5000, 50000, 500000 },
+		Prices = { 2500, 15000, 75000, 350000, 1500000, 6000000, 25000000, 100000000, 400000000 },
 	},
 	SellMultiplier = 0.5,
 }
@@ -140,15 +165,26 @@ function ShopData.GetTreadmillTierInfo(trainerLevel: number)
 	return ShopData.TreadmillTiers[clamped] or ShopData.TreadmillTiers[0]
 end
 
+-- Converts a Steal-a-Pet style Speed Stat (16 -> 900 -> 10K -> 40K -> 170K -> 75M) into a controllable physical Roblox WalkSpeed (16..74).
+function ShopData.StatToPhysicalWalkSpeed(speedStat: number): number
+	if speedStat <= 16 then
+		return 16
+	end
+	local ratio = math.max(1, speedStat / 16)
+	return math.clamp(16 + math.log10(ratio) * 7.2, 16, 74)
+end
+
 function ShopData.GetTrainerGainPerSec(trainerLevel: number): number
-	return ShopData.Speed.BaseGainPerSec + math.max(0, trainerLevel) * ShopData.Speed.GainPerLevel
+	local clamped = math.clamp(math.floor(trainerLevel), 0, ShopData.Speed.MaxLevel)
+	return ShopData.Speed.TierGains[clamped] or (ShopData.Speed.BaseGainPerSec + clamped * ShopData.Speed.GainPerLevel)
 end
 
 function ShopData.GetSpeedPrice(currentLevel: number): number?
 	if currentLevel >= ShopData.Speed.MaxLevel then
 		return nil
 	end
-	return math.floor(ShopData.Speed.BasePrice * (ShopData.Speed.PriceGrowth ^ currentLevel))
+	local clamped = math.clamp(math.floor(currentLevel), 0, ShopData.Speed.MaxLevel - 1)
+	return ShopData.Speed.TierPrices[clamped] or math.floor(ShopData.Speed.BasePrice * (ShopData.Speed.PriceGrowth ^ clamped))
 end
 
 function ShopData.GetSlotPrice(currentSlots: number): number?

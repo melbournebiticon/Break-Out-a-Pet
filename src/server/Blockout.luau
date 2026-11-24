@@ -118,16 +118,18 @@ local function buildSpeedKaratula(parent: Instance, pos: Vector3)
 		header.Parent = bg
 
 		local lines = {
-			{ text = "🌾 Zone 1 (Sabungan):   Speed 16+", color = Color3.fromRGB(145, 235, 110), y = 0.21 },
-			{ text = "🏪 Zone 2 (Palengke):   Speed 19+", color = Color3.fromRGB(255, 195, 70), y = 0.34 },
-			{ text = "🏛️ Zone 3 (Hacienda):   Speed 22+", color = Color3.fromRGB(255, 140, 85), y = 0.47 },
-			{ text = "🌴 Zone 4 (Gubat):      Speed 26+", color = Color3.fromRGB(95, 230, 175), y = 0.60 },
-			{ text = "🌋 Zone 5 (Mayon):      Speed 30+", color = Color3.fromRGB(255, 95, 75), y = 0.73 },
-			{ text = "👑 Zone 6 (Intramuros): Speed 35+", color = Color3.fromRGB(255, 215, 55), y = 0.86 },
+			{ text = "🌾 Zone 1 (Sabungan):   Speed 900+", color = Color3.fromRGB(145, 235, 110), y = 0.19 },
+			{ text = "🏪 Zone 2 (Palengke):   Speed 10K+", color = Color3.fromRGB(255, 195, 70), y = 0.29 },
+			{ text = "🏛️ Zone 3 (Hacienda):   Speed 40K+", color = Color3.fromRGB(255, 140, 85), y = 0.39 },
+			{ text = "🌴 Zone 4 (Gubat):      Speed 170K+", color = Color3.fromRGB(95, 230, 175), y = 0.49 },
+			{ text = "🌋 Zone 5 (Mayon):      Speed 750K+", color = Color3.fromRGB(255, 95, 75), y = 0.59 },
+			{ text = "👑 Zone 6 (Intramuros): Speed 3.5M+", color = Color3.fromRGB(255, 215, 55), y = 0.69 },
+			{ text = "🌸 Zone 7 (Sanctuary):  Speed 18M+", color = Color3.fromRGB(255, 140, 200), y = 0.79 },
+			{ text = "🌌 Zone 8 (Celestial):  Speed 90M+", color = Color3.fromRGB(0, 245, 225), y = 0.89 },
 		}
 		for _, line in lines do
 			local lbl = Instance.new("TextLabel")
-			lbl.Size = UDim2.fromScale(0.90, 0.12)
+			lbl.Size = UDim2.fromScale(0.90, 0.095)
 			lbl.Position = UDim2.fromScale(0.05, line.y)
 			lbl.BackgroundTransparency = 1
 			lbl.Font = Enum.Font.FredokaOne
@@ -264,8 +266,8 @@ local function buildPlotTreadmill(plot: Model, centerPos: Vector3)
 	CollectionService:AddTag(console, "PlotTreadmillConsole")
 
 	local header = makePart("TreadmillSign", Vector3.new(8.6, 2.5, 0.8), deckCenter + Vector3.new(0, 4.9, -4.9), Color3.fromRGB(22, 26, 38), tm, Enum.Material.Metal)
-	addSurfaceSign(header, Enum.NormalId.Back, "🏃 Tsinelas Lakad Pad (Tier 0)", "+0.20 Speed/sec • Press E to Upgrade!", Color3.fromRGB(80, 230, 255))
-	addSurfaceSign(header, Enum.NormalId.Front, "🏃 Tsinelas Lakad Pad (Tier 0)", "+0.20 Speed/sec • Press E to Upgrade!", Color3.fromRGB(80, 230, 255))
+	addSurfaceSign(header, Enum.NormalId.Back, "🏃 Tsinelas Lakad Pad (Tier 0)", "+15 Speed/sec • Press E to Upgrade!", Color3.fromRGB(80, 230, 255))
+	addSurfaceSign(header, Enum.NormalId.Front, "🏃 Tsinelas Lakad Pad (Tier 0)", "+15 Speed/sec • Press E to Upgrade!", Color3.fromRGB(80, 230, 255))
 end
 
 local function buildPamaloShopStand(lobby: Instance, centerPos: Vector3)
@@ -321,7 +323,7 @@ function Blockout.EnsureMap()
 	end
 
 	local existingPrison = workspace:FindFirstChild("Prison")
-	if existingPrison and not existingPrison:GetAttribute("RedesignedV16") then
+	if existingPrison and not existingPrison:GetAttribute("RedesignedV18") then
 		existingPrison:Destroy()
 		for _, folderName in { "BasePlots", "Lobby", "PatrolPoints", "EnemySpawns", "Enemies" } do
 			local f = workspace:FindFirstChild(folderName)
@@ -336,7 +338,7 @@ function Blockout.EnsureMap()
 	if not prison then
 		prison = Instance.new("Folder")
 		prison.Name = "Prison"
-		prison:SetAttribute("RedesignedV16", true)
+		prison:SetAttribute("RedesignedV18", true)
 		prison.Parent = workspace
 
 		local safeLine = makePart("SafeZoneLine", Vector3.new(84, 0.35, 3.5), Vector3.new(0, 0.9, -47.5), Color3.fromRGB(60, 255, 120), prison, Enum.Material.Neon)
@@ -355,7 +357,7 @@ function Blockout.EnsureMap()
 		local zones = {
 			{
 				name = "Zone1",
-				title = "🌾 ZONE 1: BUKID & SABUNGAN (Speed 16+)",
+				title = "🌾 ZONE 1: BUKID & SABUNGAN (Speed 900+)",
 				zCenter = -125,
 				archZ = -50,
 				color = Color3.fromRGB(105, 155, 82),
@@ -365,7 +367,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone2",
-				title = "🏪 ZONE 2: PALENGKE & TIANGGE (Speed 19+)",
+				title = "🏪 ZONE 2: PALENGKE & TIANGGE (Speed 10K+)",
 				zCenter = -275,
 				archZ = -200,
 				color = Color3.fromRGB(185, 150, 95),
@@ -375,7 +377,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone3",
-				title = "🏛️ ZONE 3: HACIENDA COMPOUND (Speed 22+)",
+				title = "🏛️ ZONE 3: HACIENDA COMPOUND (Speed 40K+)",
 				zCenter = -425,
 				archZ = -350,
 				color = Color3.fromRGB(115, 85, 65),
@@ -385,7 +387,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone4",
-				title = "🌴 ZONE 4: BOHOL & PALAWAN GUBAT (Speed 26+)",
+				title = "🌴 ZONE 4: BOHOL & PALAWAN GUBAT (Speed 170K+)",
 				zCenter = -575,
 				archZ = -500,
 				color = Color3.fromRGB(58, 125, 78),
@@ -395,7 +397,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone5",
-				title = "🌋 ZONE 5: BULKANG MAYON RIDGE (Speed 30+)",
+				title = "🌋 ZONE 5: BULKANG MAYON RIDGE (Speed 750K+)",
 				zCenter = -725,
 				archZ = -650,
 				color = Color3.fromRGB(75, 52, 48),
@@ -405,7 +407,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone6",
-				title = "👑 ZONE 6: INTRAMUROS ROYAL VAULT (Speed 35+)",
+				title = "👑 ZONE 6: INTRAMUROS ROYAL VAULT (Speed 3.5M+)",
 				zCenter = -875,
 				archZ = -800,
 				color = Color3.fromRGB(68, 62, 85),
@@ -415,7 +417,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone7",
-				title = "🌸 ZONE 7: MYTHICAL SANCTUARY (Speed 40+)",
+				title = "🌸 ZONE 7: MYTHICAL SANCTUARY (Speed 18M+)",
 				zCenter = -1025,
 				archZ = -950,
 				color = Color3.fromRGB(185, 130, 165),
@@ -425,7 +427,7 @@ function Blockout.EnsureMap()
 			},
 			{
 				name = "Zone8",
-				title = "🌌 ZONE 8: CELESTIAL VAULT (Speed 45+)",
+				title = "🌌 ZONE 8: CELESTIAL VAULT (Speed 90M+)",
 				zCenter = -1175,
 				archZ = -1100,
 				color = Color3.fromRGB(35, 40, 75),

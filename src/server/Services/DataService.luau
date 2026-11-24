@@ -53,6 +53,7 @@ DataService.ProfileLoaded = ProfileLoadedEvent.Event
 local profiles: { [Player]: Profile } = {}
 local dirty: { [Player]: boolean } = {}
 local loadFailed: { [Player]: boolean } = {}
+local activeSaves = 0
 local studioOfflineMode = false
 local store: DataStore? = nil
 
@@ -85,7 +86,7 @@ local function migrateAndSanitize(raw: any): Profile
 	local money = if typeof(raw.Money) == "number" and raw.Money == raw.Money then math.max(0, math.floor(raw.Money)) else Config.StartingMoney
 	local speedLevel = if typeof(raw.SpeedLevel) == "number" then math.clamp(math.floor(raw.SpeedLevel), 0, ShopData.Speed.MaxLevel) else 0
 	local trainedSpeed = if typeof(raw.TrainedSpeed) == "number" and raw.TrainedSpeed == raw.TrainedSpeed
-		then math.clamp(raw.TrainedSpeed, 0, 120)
+		then math.clamp(raw.TrainedSpeed, 0, 999999999)
 		else (speedLevel * ShopData.Speed.SpeedPerLevel)
 	local maxAllowedSlots = Config.MaxPetSlots + Config.ExtraPassPetSlots
 	local petSlots = if typeof(raw.PetSlots) == "number" then math.clamp(math.floor(raw.PetSlots), Config.StartingPetSlots, maxAllowedSlots) else Config.StartingPetSlots
@@ -234,11 +235,13 @@ function DataService.SavePlayer(player: Player, force: boolean?): boolean
 
 	local key = `Player_{player.UserId}`
 	local payload = serializeProfile(profile)
+	activeSaves += 1
 	local ok, err = pcall(function()
 		(store :: DataStore):UpdateAsync(key, function()
 			return payload
 		end)
 	end)
+	activeSaves -= 1
 
 	if ok then
 		dirty[player] = false
@@ -305,7 +308,7 @@ local function loadPlayer(player: Player)
 	player:SetAttribute("DailyStreak", profile.DailyStreak)
 	player:SetAttribute("LastDailyClaimDay", profile.LastDailyClaimDay)
 
-	print(`[DataService] Loaded {player.Name}`)
+	print(`[DataService] Loaded {player.Name} (Money=${profile.Money}, SpeedLevel={profile.SpeedLevel}, TrainedSpeed={profile.TrainedSpeed}, Pets={#profile.Pets}, StudioOffline={studioOfflineMode})`)
 	ProfileLoadedEvent:Fire(player, profile)
 end
 
@@ -359,11 +362,9 @@ function DataService.Init()
 
 	Players.PlayerRemoving:Connect(function(player)
 		DataService.SavePlayer(player, true)
-		if not game:GetService("RunService"):IsStudio() then
-			profiles[player] = nil
-			dirty[player] = nil
-			loadFailed[player] = nil
-		end
+		profiles[player] = nil
+		dirty[player] = nil
+		loadFailed[player] = nil
 	end)
 
 	-- Autosave loop
@@ -380,19 +381,18 @@ function DataService.Init()
 	end)
 
 	game:BindToClose(function()
-		local active = Players:GetPlayers()
-		local remaining = #active
-		if remaining == 0 then
-			return
-		end
-		for _, player in active do
-			task.spawn(function()
-				DataService.SavePlayer(player, true)
-				remaining -= 1
-			end)
+		local pending = 0
+		for player, _ in profiles do
+			if dirty[player] then
+				pending += 1
+				task.spawn(function()
+					DataService.SavePlayer(player, true)
+					pending -= 1
+				end)
+			end
 		end
 		local deadline = os.clock() + 25
-		while remaining > 0 and os.clock() < deadline do
+		while (pending > 0 or activeSaves > 0) and os.clock() < deadline do
 			task.wait(0.1)
 		end
 	end)

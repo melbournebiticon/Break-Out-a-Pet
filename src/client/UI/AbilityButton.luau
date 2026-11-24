@@ -21,14 +21,14 @@ function AbilityButton.Init(screenGui: ScreenGui)
 
 	local btn = Instance.new("TextButton")
 	btn.Name = "AbilityButton"
-	btn.Size = UDim2.fromOffset(82, 82)
-	btn.Position = UDim2.new(1, -24, 1, -24)
+	btn.Size = UDim2.fromOffset(68, 68)
+	btn.Position = UDim2.new(1, -126, 1, -18)
 	btn.AnchorPoint = Vector2.new(1, 1)
 	btn.BackgroundColor3 = Theme.BgCard
 	btn.BorderSizePixel = 0
 	btn.Text = ""
 	btn.Visible = false
-	Theme.AddCorner(btn, 41)
+	Theme.AddCorner(btn, 34)
 	Theme.AddStroke(btn, Theme.AccentGold, 3)
 	btn.Parent = screenGui
 

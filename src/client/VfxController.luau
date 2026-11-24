@@ -377,7 +377,7 @@ function VfxController.Init()
 		label.TextScaled = true
 		label.TextColor3 = Color3.fromRGB(80, 230, 255)
 		label.TextStrokeTransparency = 0
-		label.Text = string.format("+%.2f ⚡ Speed!", gain)
+		label.Text = `+{NumberFormat.Short(gain)} ⚡ Speed!`
 		label.Parent = gui
 		gui.Parent = root
 

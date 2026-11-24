@@ -16,22 +16,28 @@ local Config = require(Shared:WaitForChild("Config"))
 local EnemyData = require(Shared:WaitForChild("EnemyData"))
 local CageService = require(script.Parent:WaitForChild("CageService"))
 
-type EnemyState = "Patrol" | "Chase" | "Stunned"
+type EnemyState = "Sleep" | "Waking" | "Chase" | "Stunned"
 
 type Enemy = {
 	Model: Model,
 	Humanoid: Humanoid,
 	Root: BasePart,
 	Head: BasePart,
+	NameLabel: TextLabel?,
 	EnemyType: string,
+	DisplayTitle: string,
+	TagColor: Color3,
 	Stats: EnemyData.EnemyStats,
 	Zone: string,
+	BaseWalkSpeed: number,
+	BaseChaseSpeed: number,
 	SpeedMultiplier: number,
 	SpawnCFrame: CFrame,
 
 	State: EnemyState,
 	Target: Player?,
 	ChaseStartedAt: number,
+	WakingEndsAt: number,
 	LastSawTargetAt: number,
 	StunEndsAt: number,
 	FrozenUntil: number,
@@ -47,6 +53,17 @@ type Enemy = {
 	PatrolWaitUntil: number,
 	LastProgressPos: Vector3,
 	LastProgressAt: number,
+}
+
+local ZONE_BOUNDS: { [string]: { MinZ: number, MaxZ: number, RequiredSpeedStat: number, WalkSpeed: number, ChaseSpeed: number } } = {
+	Zone1 = { MinZ = -200, MaxZ = -48, RequiredSpeedStat = 900, WalkSpeed = 13.0, ChaseSpeed = 16.5 },
+	Zone2 = { MinZ = -350, MaxZ = -200, RequiredSpeedStat = 10000, WalkSpeed = 15.0, ChaseSpeed = 20.5 },
+	Zone3 = { MinZ = -500, MaxZ = -350, RequiredSpeedStat = 40000, WalkSpeed = 17.0, ChaseSpeed = 24.0 },
+	Zone4 = { MinZ = -650, MaxZ = -500, RequiredSpeedStat = 170000, WalkSpeed = 19.0, ChaseSpeed = 27.5 },
+	Zone5 = { MinZ = -800, MaxZ = -650, RequiredSpeedStat = 750000, WalkSpeed = 21.0, ChaseSpeed = 30.5 },
+	Zone6 = { MinZ = -950, MaxZ = -800, RequiredSpeedStat = 3500000, WalkSpeed = 23.0, ChaseSpeed = 33.5 },
+	Zone7 = { MinZ = -1100, MaxZ = -950, RequiredSpeedStat = 18000000, WalkSpeed = 25.0, ChaseSpeed = 36.5 },
+	Zone8 = { MinZ = -1255, MaxZ = -1100, RequiredSpeedStat = 90000000, WalkSpeed = 27.0, ChaseSpeed = 39.5 },
 }
 
 local EnemyService = {}
@@ -198,12 +215,12 @@ local function makeAttachedPart(name: string, size: Vector3, cf: CFrame, color: 
 	return p
 end
 
-local function addNameTag(head: BasePart, displayName: string, color: Color3)
+local function addNameTag(head: BasePart, displayName: string, color: Color3): TextLabel
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "EnemyTag"
-	gui.Size = UDim2.fromScale(3.6, 0.85)
+	gui.Size = UDim2.fromScale(4.0, 0.9)
 	gui.StudsOffset = Vector3.new(0, 2.5, 0)
-	gui.MaxDistance = 42
+	gui.MaxDistance = 45
 	gui.AlwaysOnTop = false
 	gui.Adornee = head
 
@@ -218,6 +235,7 @@ local function addNameTag(head: BasePart, displayName: string, color: Color3)
 	label.Parent = gui
 
 	gui.Parent = head
+	return label
 end
 
 local function decorateWardenByZone(model: Model, head: BasePart, root: BasePart, zone: string, theme: WardenTheme)
@@ -489,6 +507,28 @@ local function isInsidePrison(pos: Vector3): boolean
 	return pos.Z <= Config.SafeZoneZ and math.abs(pos.X) <= 41
 end
 
+local function isPositionInZone(pos: Vector3, zone: string): boolean
+	if not isInsidePrison(pos) then
+		return false
+	end
+	local bounds = ZONE_BOUNDS[zone]
+	if not bounds then
+		return true
+	end
+	return pos.Z >= bounds.MinZ and pos.Z <= bounds.MaxZ
+end
+
+local function isPlayerEligibleForZoneEnemy(player: Player, targetRoot: BasePart, zone: string): boolean
+	if not isInsidePrison(targetRoot.Position) then
+		return false
+	end
+	local cageZone = player:GetAttribute("CarriedCageZone")
+	if typeof(cageZone) == "string" and cageZone ~= "" then
+		return cageZone == zone
+	end
+	return isPositionInZone(targetRoot.Position, zone)
+end
+
 local function getPlayerRoot(player: Player): BasePart?
 	local character = player.Character
 	if not character then
@@ -540,9 +580,9 @@ local function findTarget(enemy: Enemy): Player?
 			local sightRange = getEffectiveSightRange(enemy, player)
 			if sightRange > 0 then
 				local targetRoot = getPlayerRoot(player)
-				if targetRoot and isInsidePrison(targetRoot.Position) then
+				if targetRoot and isPlayerEligibleForZoneEnemy(player, targetRoot, enemy.Zone) then
 					local dist = (targetRoot.Position - enemy.Root.Position).Magnitude
-					if dist <= sightRange and dist < bestDist and hasLineOfSight(enemy, player, targetRoot) then
+					if dist <= sightRange and dist < bestDist then
 						bestDist = dist
 						bestPlayer = player
 					end
@@ -580,13 +620,21 @@ end
 
 local function updateBeingChasedAttributes()
 	local counts: { [Player]: number } = {}
+	local chaserTitles: { [Player]: string } = {}
 	for _, enemy in enemies do
 		if enemy.State == "Chase" and enemy.Target and enemy.Model.Parent then
 			counts[enemy.Target] = (counts[enemy.Target] or 0) + 1
+			if not chaserTitles[enemy.Target] or enemy.EnemyType == "Warden" then
+				chaserTitles[enemy.Target] = enemy.DisplayTitle
+			end
 		end
 	end
 	for _, player in Players:GetPlayers() do
 		local chased = (counts[player] or 0) > 0
+		local title = chaserTitles[player] or ""
+		if player:GetAttribute("ChaserName") ~= title then
+			player:SetAttribute("ChaserName", title)
+		end
 		if player:GetAttribute("BeingChased") ~= chased then
 			player:SetAttribute("BeingChased", chased)
 		end
@@ -595,18 +643,37 @@ end
 
 -- State transitions ---------------------------------------------------------
 
-local function enterPatrol(enemy: Enemy, now: number)
+local function enterSleep(enemy: Enemy, now: number)
 	local wasChase = enemy.State == "Chase"
-	enemy.State = "Patrol"
+	enemy.State = "Sleep"
 	enemy.Target = nil
 	enemy.Waypoints = {}
 	enemy.WaypointIndex = 1
 	enemy.LastPathTargetPos = nil
 	enemy.PatrolTargetPos = nil
 	enemy.PatrolWaitUntil = now
-	enemy.Humanoid.WalkSpeed = enemy.Stats.WalkSpeed * enemy.SpeedMultiplier
+	enemy.Humanoid.WalkSpeed = 0
+	enemy.Humanoid:MoveTo(enemy.Root.Position)
+	if enemy.NameLabel then
+		enemy.NameLabel.Text = `😴 {enemy.DisplayTitle} (Zzz...)`
+		enemy.NameLabel.TextColor3 = Color3.fromRGB(180, 210, 255)
+	end
 	if wasChase then
 		updateBeingChasedAttributes()
+	end
+end
+
+local function enterWaking(enemy: Enemy, target: Player, now: number)
+	enemy.State = "Waking"
+	enemy.Target = target
+	enemy.WakingEndsAt = now + 0.65
+	enemy.Waypoints = {}
+	enemy.WaypointIndex = 1
+	enemy.Humanoid.WalkSpeed = 0
+	enemy.Humanoid:MoveTo(enemy.Root.Position)
+	if enemy.NameLabel then
+		enemy.NameLabel.Text = `❗ NAGISING SI {enemy.DisplayTitle}!`
+		enemy.NameLabel.TextColor3 = Color3.fromRGB(255, 225, 65)
 	end
 end
 
@@ -620,7 +687,11 @@ local function enterChase(enemy: Enemy, target: Player, now: number)
 	enemy.Waypoints = {}
 	enemy.WaypointIndex = 1
 	enemy.PatrolTargetPos = nil
-	enemy.Humanoid.WalkSpeed = enemy.Stats.ChaseSpeed * enemy.SpeedMultiplier
+	enemy.Humanoid.WalkSpeed = enemy.BaseChaseSpeed
+	if enemy.NameLabel then
+		enemy.NameLabel.Text = `😡 {enemy.DisplayTitle}`
+		enemy.NameLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
+	end
 	updateBeingChasedAttributes()
 end
 
@@ -633,6 +704,10 @@ local function enterStunned(enemy: Enemy, now: number)
 	enemy.StunEndsAt = now + enemy.Stats.StunSeconds
 	enemy.Humanoid.WalkSpeed = 0
 	enemy.Humanoid:MoveTo(enemy.Root.Position)
+	if enemy.NameLabel then
+		enemy.NameLabel.Text = `💫 {enemy.DisplayTitle}`
+		enemy.NameLabel.TextColor3 = enemy.TagColor
+	end
 	updateBeingChasedAttributes()
 end
 
@@ -746,11 +821,13 @@ local function stepEnemy(enemy: Enemy, now: number)
 		return
 	end
 
-	if enemy.Root.Position.Y < EnemyData.FallResetY or not isInsidePrison(enemy.Root.Position) then
+	local outOfBounds = enemy.Root.Position.Y < EnemyData.FallResetY or not isInsidePrison(enemy.Root.Position)
+	local sleepOutsideZone = enemy.State == "Sleep" and not isPositionInZone(enemy.Root.Position, enemy.Zone)
+	if outOfBounds or sleepOutsideZone then
 		enemy.Model:PivotTo(enemy.SpawnCFrame)
 		enemy.LastProgressPos = enemy.SpawnCFrame.Position
 		enemy.LastProgressAt = now
-		enterPatrol(enemy, now)
+		enterSleep(enemy, now)
 		return
 	end
 
@@ -762,58 +839,38 @@ local function stepEnemy(enemy: Enemy, now: number)
 	if enemy.State == "Stunned" then
 		if now >= enemy.StunEndsAt then
 			enemy.ReChaseAvailableAt = now + enemy.Stats.ReChaseCooldownSeconds
-			enterPatrol(enemy, now)
+			enterSleep(enemy, now)
 		end
 		return
 	end
 
-	if enemy.State == "Patrol" then
-		enemy.Humanoid.WalkSpeed = enemy.Stats.WalkSpeed * enemy.SpeedMultiplier
+	if enemy.State == "Sleep" then
+		enemy.Humanoid.WalkSpeed = 0
 		if now >= enemy.NextDetectionAt and now >= enemy.ReChaseAvailableAt then
 			enemy.NextDetectionAt = now + EnemyData.DetectionIntervalSeconds
 			local target = findTarget(enemy)
 			if target then
-				enterChase(enemy, target, now)
+				enterWaking(enemy, target, now)
 				return
 			end
 		end
+		return
+	end
 
-		if not enemy.PatrolTargetPos then
-			enemy.LastProgressPos = enemy.Root.Position
-			enemy.LastProgressAt = now
-			if now >= enemy.PatrolWaitUntil then
-				local nextPos = pickPatrolPoint(enemy.Zone, nil)
-				if nextPos then
-					enemy.PatrolTargetPos = nextPos
-					recomputeChasePath(enemy, nextPos)
-				else
-					enemy.PatrolWaitUntil = now + EnemyData.PatrolWaitSeconds
-				end
-			end
-		else
-			if (enemy.Root.Position - enemy.LastProgressPos).Magnitude > 1.5 then
-				enemy.LastProgressPos = enemy.Root.Position
-				enemy.LastProgressAt = now
-			elseif (now - enemy.LastProgressAt) > 4.0 then
-				enemy.Model:PivotTo(enemy.SpawnCFrame)
-				enemy.LastProgressPos = enemy.SpawnCFrame.Position
-				enemy.LastProgressAt = now
-				enemy.PatrolTargetPos = nil
-				enemy.PatrolWaitUntil = now + 0.5
-				return
-			end
-
-			local targetPos = enemy.PatrolTargetPos
-			local flatDelta = Vector3.new(targetPos.X - enemy.Root.Position.X, 0, targetPos.Z - enemy.Root.Position.Z)
-			if flatDelta.Magnitude <= EnemyData.WaypointReachDistance then
-				enemy.PatrolWaitUntil = now + EnemyData.PatrolWaitSeconds
-				local waitPos = enemy.Root.Position
-				enemy.PatrolTargetPos = nil
-				enemy.Waypoints = {}
-				enemy.Humanoid:MoveTo(waitPos)
-			else
-				followWaypoints(enemy, targetPos)
-			end
+	if enemy.State == "Waking" then
+		enemy.Humanoid.WalkSpeed = 0
+		local target = enemy.Target
+		if not target or not isPlayerCarryingAnything(target) then
+			enterSleep(enemy, now)
+			return
+		end
+		local targetRoot = getPlayerRoot(target)
+		if not targetRoot or not isPlayerEligibleForZoneEnemy(target, targetRoot, enemy.Zone) then
+			enterSleep(enemy, now)
+			return
+		end
+		if now >= enemy.WakingEndsAt then
+			enterChase(enemy, target, now)
 		end
 		return
 	end
@@ -821,33 +878,26 @@ local function stepEnemy(enemy: Enemy, now: number)
 	-- State == "Chase"
 	local target = enemy.Target
 	if not target or not isPlayerCarryingAnything(target) then
-		enterPatrol(enemy, now)
+		enterSleep(enemy, now)
 		return
 	end
 
 	local targetRoot = getPlayerRoot(target)
-	if not targetRoot or not isInsidePrison(targetRoot.Position) then
-		enterPatrol(enemy, now)
+	if not targetRoot or not isPlayerEligibleForZoneEnemy(target, targetRoot, enemy.Zone) then
+		enterSleep(enemy, now)
 		return
 	end
 
 	local effectiveSight = getEffectiveSightRange(enemy, target)
-	if now >= enemy.NextDetectionAt then
-		enemy.NextDetectionAt = now + EnemyData.DetectionIntervalSeconds
-		if effectiveSight > 0 and hasLineOfSight(enemy, target, targetRoot) then
-			enemy.LastSawTargetAt = now
-		end
-	end
-
-	if effectiveSight <= 0 or (now - enemy.LastSawTargetAt) >= enemy.Stats.LoseSightSeconds then
-		enterPatrol(enemy, now)
+	if effectiveSight <= 0 then
+		enterSleep(enemy, now)
 		return
 	end
 
 	local dist = (targetRoot.Position - enemy.Root.Position).Magnitude
 	if dist <= enemy.Stats.CatchDistance then
 		if CageService.IsCarrying(target) then
-			CageService.DropCage(target, "caught")
+			CageService.DropCage(target, "caught", enemy.DisplayTitle)
 		elseif extraCatchHandler then
 			extraCatchHandler(target)
 		end
@@ -855,11 +905,29 @@ local function stepEnemy(enemy: Enemy, now: number)
 		return
 	end
 
-	local speed = enemy.Stats.ChaseSpeed * enemy.SpeedMultiplier
-	if enemy.Stats.BoostAfterSeconds > 0 and (now - enemy.ChaseStartedAt) >= enemy.Stats.BoostAfterSeconds then
-		speed *= enemy.Stats.BoostMultiplier
+	-- Balanced Chase Speed vs. Player's RequiredSpeedStat & Carried WalkSpeed:
+	-- * If player's Speed Stat >= Zone's RequiredSpeedStat, Bantay is capped below the player's carried WalkSpeed (82%..92%) so they can outrun the Bantay!
+	-- * If player's Speed Stat < Zone's RequiredSpeedStat, Bantay runs faster than the player (108%..130%) so under-leveled players get caught!
+	local zoneBounds = ZONE_BOUNDS[enemy.Zone]
+	local reqStat = if zoneBounds then zoneBounds.RequiredSpeedStat else 900
+	local playerStatAttr = target:GetAttribute("TotalSpeedStat")
+	local playerStat = if typeof(playerStatAttr) == "number" then playerStatAttr else 16
+	local targetHum = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
+	local playerCarriedWalkSpeed = if targetHum and targetHum.WalkSpeed > 0 then targetHum.WalkSpeed else 16
+
+	local chaseElapsed = math.max(0, now - enemy.ChaseStartedAt)
+	if playerStat >= reqStat then
+		local overRatio = math.clamp(playerStat / math.max(1, reqStat), 1, 3)
+		-- At exact reqStat: 90% of player's carried speed; at 2x+ reqStat (e.g. 38M in 18M zone): 80% of player's carried speed!
+		local capRatio = 0.90 - ((overRatio - 1) / 2) * 0.12
+		local ramp = math.min(0.04, chaseElapsed * 0.004)
+		enemy.Humanoid.WalkSpeed = math.max(12, playerCarriedWalkSpeed * (capRatio + ramp))
+	else
+		local deficit = math.clamp(1 - (playerStat / math.max(1, reqStat)), 0.05, 1)
+		local catchMult = 1.08 + deficit * 0.24
+		local ramp = math.min(6, chaseElapsed * 0.8)
+		enemy.Humanoid.WalkSpeed = math.max(enemy.BaseChaseSpeed, playerCarriedWalkSpeed * catchMult + ramp)
 	end
-	enemy.Humanoid.WalkSpeed = speed
 
 	local targetPos = targetRoot.Position
 	if now >= enemy.NextPathRecomputeAt then
@@ -890,21 +958,40 @@ function EnemyService.SpawnTemporaryEnemy(enemyType: string, zone: string, cfram
 		root:SetNetworkOwner(nil)
 	end)
 
+	local theme = WARDEN_THEMES[zone] or WARDEN_THEMES.Zone1
+	local displayTitle = if enemyType == "Dog"
+		then (if zone == "Zone3" then "🐕‍🦺 BANTAY ASO" else "🐕 ASPIN")
+		else theme.Title
+	local tagColor = if enemyType == "Dog"
+		then (if zone == "Zone3" then Color3.fromRGB(255, 195, 65) else Color3.fromRGB(255, 185, 95))
+		else theme.TagColor
+	local tagGui = head:FindFirstChild("EnemyTag")
+	local nameLabel = if tagGui then tagGui:FindFirstChildOfClass("TextLabel") else nil
+	local zonePreset = ZONE_BOUNDS[zone] or ZONE_BOUNDS.Zone1
+	local baseWalkSpeed = if enemyType == "Dog" then zonePreset.WalkSpeed + 2.5 else zonePreset.WalkSpeed
+	local baseChaseSpeed = if enemyType == "Dog" then zonePreset.ChaseSpeed + 2.5 else zonePreset.ChaseSpeed
+
 	local now = os.clock()
 	local enemy: Enemy = {
 		Model = model,
 		Humanoid = humanoid,
 		Root = root,
 		Head = head,
+		NameLabel = nameLabel,
 		EnemyType = enemyType,
+		DisplayTitle = displayTitle,
+		TagColor = tagColor,
 		Stats = stats,
 		Zone = zone,
+		BaseWalkSpeed = baseWalkSpeed,
+		BaseChaseSpeed = baseChaseSpeed,
 		SpeedMultiplier = speedMultiplier,
 		SpawnCFrame = cframe,
 
-		State = "Patrol",
+		State = "Sleep",
 		Target = nil,
 		ChaseStartedAt = 0,
+		WakingEndsAt = 0,
 		LastSawTargetAt = 0,
 		StunEndsAt = 0,
 		FrozenUntil = 0,
@@ -922,7 +1009,7 @@ function EnemyService.SpawnTemporaryEnemy(enemyType: string, zone: string, cfram
 		LastProgressAt = now,
 	}
 
-	enterPatrol(enemy, now)
+	enterSleep(enemy, now)
 	table.insert(enemies, enemy)
 	return model
 end
@@ -968,6 +1055,26 @@ function EnemyService.Init()
 	end
 	CollectionService:GetInstanceAddedSignal("EnemySpawn"):Connect(function(instance)
 		task.spawn(setupSpawn, instance)
+	end)
+
+	-- Instant aggro: as soon as a player grabs a cage in a Zone, that Zone's Bantay immediately reacts and chases!
+	CageService.CagePickedUp:Connect(function(player: Player)
+		local cageZone = player:GetAttribute("CarriedCageZone")
+		if typeof(cageZone) ~= "string" or cageZone == "" then
+			return
+		end
+		local now = os.clock()
+		local targetRoot = getPlayerRoot(player)
+		if not targetRoot or not isInsidePrison(targetRoot.Position) then
+			return
+		end
+		for _, enemy in enemies do
+			if enemy.Zone == cageZone and enemy.State == "Sleep" and now >= enemy.FrozenUntil and now >= enemy.ReChaseAvailableAt then
+				if getEffectiveSightRange(enemy, player) > 0 then
+					enterWaking(enemy, player, now)
+				end
+			end
+		end
 	end)
 
 	RunService.Heartbeat:Connect(function()

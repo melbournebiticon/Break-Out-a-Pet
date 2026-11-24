@@ -181,12 +181,22 @@ local function onPamaloSwung(player: Player, tool: Tool, info: PamaloConfig.Pama
 		return
 	end
 
-	-- Swing animation & whoosh sound
+	-- Trigger Roblox's native arm slash animation + smooth 3-stage slap arc + visual slash wave!
+	local animTag = Instance.new("StringValue")
+	animTag.Name = "toolanim"
+	animTag.Value = "Slash"
+	animTag.Parent = tool
+
 	local handle = tool:FindFirstChild("Handle")
+	local trail: Trail? = nil
 	if handle and handle:IsA("BasePart") then
+		trail = handle:FindFirstChild("SwingTrail") :: Trail?
+		if trail then
+			trail.Enabled = true
+		end
 		local whoosh = Instance.new("Sound")
-		whoosh.SoundId = "rbxasset://sounds/action_jump.mp3"
-		whoosh.PlaybackSpeed = 1.35
+		whoosh.SoundId = "rbxasset://sounds/swordslash.wav"
+		whoosh.PlaybackSpeed = 1.25
 		whoosh.Volume = 0.65
 		whoosh.Parent = handle
 		whoosh:Play()
@@ -197,11 +207,46 @@ local function onPamaloSwung(player: Player, tool: Tool, info: PamaloConfig.Pama
 		end)
 	end
 
-	local origGrip = tool.Grip
-	tool.Grip = origGrip * CFrame.Angles(math.rad(-75), 0, 0)
-	task.delay(0.18, function()
+	-- Spawn a quick visible curved slap arc in front of the player
+	local slashWave = Instance.new("Part")
+	slashWave.Name = "PamaloSlashArc"
+	slashWave.Size = Vector3.new(if info.IsAoE then 6.5 else 4.2, 0.25, 2.4)
+	slashWave.CFrame = root.CFrame * CFrame.new(0, 0.4, -3.2) * CFrame.Angles(0, 0, math.rad(-18))
+	slashWave.Color = if info.Id == "gintong_tsinelas" then Color3.fromRGB(255, 215, 55) else Color3.fromRGB(235, 248, 255)
+	slashWave.Material = Enum.Material.Neon
+	slashWave.Transparency = 0.35
+	slashWave.Anchored = true
+	slashWave.CanCollide = false
+	slashWave.CanTouch = false
+	slashWave.CanQuery = false
+	slashWave.Parent = workspace
+	task.delay(0.14, function()
+		if slashWave.Parent then
+			slashWave:Destroy()
+		end
+	end)
+
+	local baseGrip = CFrame.new(0, -0.65, 0)
+	-- Stage 1: Quick wind-up back
+	tool.Grip = baseGrip * CFrame.Angles(math.rad(35), math.rad(-25), math.rad(20))
+	task.delay(0.05, function()
 		if tool.Parent then
-			tool.Grip = origGrip
+			-- Stage 2: Fast diagonal slap forward & down
+			tool.Grip = baseGrip * CFrame.Angles(math.rad(-95), math.rad(15), math.rad(-25))
+		end
+	end)
+	task.delay(0.14, function()
+		if tool.Parent then
+			-- Stage 3: Follow-through sweep
+			tool.Grip = baseGrip * CFrame.Angles(math.rad(-115), math.rad(35), math.rad(-35))
+		end
+	end)
+	task.delay(0.26, function()
+		if trail then
+			trail.Enabled = false
+		end
+		if tool.Parent then
+			tool.Grip = baseGrip
 		end
 	end)
 
@@ -292,6 +337,7 @@ local function giveEquippedPamaloTool(player: Player)
 	tool:SetAttribute("PamaloId", info.Id)
 
 	PamaloConfig.BuildToolParts(info.Id, CFrame.new(), tool, false)
+	tool.Grip = CFrame.new(0, -0.65, 0)
 
 	tool.Activated:Connect(function()
 		onPamaloSwung(player, tool, info)

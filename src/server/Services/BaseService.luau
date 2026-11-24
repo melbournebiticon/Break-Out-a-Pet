@@ -22,14 +22,18 @@ local PetModelRenderedEvent = Instance.new("BindableEvent")
 BaseService.PetModelRendered = PetModelRenderedEvent.Event
 
 local SPAWN_OFFSETS: { Vector3 } = {
-	Vector3.new(-10, 2.1, -6),
-	Vector3.new(0, 2.1, -6),
-	Vector3.new(10, 2.1, -6),
-	Vector3.new(-10, 2.1, 4),
-	Vector3.new(0, 2.1, 4),
-	Vector3.new(10, 2.1, 4),
-	Vector3.new(-8, 2.1, 11),
-	Vector3.new(8, 2.1, 11),
+	Vector3.new(-12, 2.1, -8),
+	Vector3.new(0, 2.1, -8),
+	Vector3.new(12, 2.1, -8),
+	Vector3.new(-12, 2.1, 0),
+	Vector3.new(0, 2.1, 0),
+	Vector3.new(12, 2.1, 0),
+	Vector3.new(-12, 2.1, 8),
+	Vector3.new(0, 2.1, 8),
+	Vector3.new(12, 2.1, 8),
+	Vector3.new(-10, 2.1, 14),
+	Vector3.new(0, 2.1, 14),
+	Vector3.new(10, 2.1, 14),
 }
 
 local function getPetsFolder(plot: Model): Folder

@@ -144,8 +144,9 @@ function ShopPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 		local currentGain = ShopData.GetTrainerGainPerSec(speedLvl)
 		local speedPrice = ShopData.GetSpeedPrice(speedLvl)
 
+		local nextGain = ShopData.GetTrainerGainPerSec(math.min(speedLvl + 1, ShopData.Speed.MaxLevel))
 		speedTitle.Text = `🏃 {tierInfo.Name} (Tier {speedLvl}/{ShopData.Speed.MaxLevel})`
-		speedDesc.Text = string.format("Treadmill Gain: +%.2f Speed/sec  (+%.2f/s per tier)", currentGain, ShopData.Speed.GainPerLevel)
+		speedDesc.Text = `Treadmill Gain: +{NumberFormat.Short(currentGain)} Speed/sec  (Next: +{NumberFormat.Short(nextGain)}/s)`
 		if not speedPrice then
 			speedBtn.Text = "MAXED"
 			speedBtn.BackgroundColor3 = Theme.BgHeader

@@ -44,6 +44,7 @@ local function closeAllPanels()
 	for _, panel in panels do
 		panel.SetVisible(false)
 	end
+	Hud.SetSideMenuVisible(true)
 end
 
 local function togglePanel(name: string)
@@ -55,6 +56,7 @@ local function togglePanel(name: string)
 	closeAllPanels()
 	if not wasOpen then
 		target.SetVisible(true)
+		Hud.SetSideMenuVisible(false)
 	end
 end
 
@@ -63,6 +65,7 @@ local function openPanel(name: string)
 	local target = panels[name]
 	if target then
 		target.SetVisible(true)
+		Hud.SetSideMenuVisible(false)
 	end
 end
 

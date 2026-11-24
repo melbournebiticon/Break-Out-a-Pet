@@ -104,27 +104,33 @@ end
 function Theme.MakeModalShell(screenGui: ScreenGui, titleText: string, onClose: () -> ()): (Frame, Frame)
 	local modal = Theme.MakeFrame(
 		titleText .. "Modal",
-		UDim2.fromScale(0.68, 0.72),
-		UDim2.fromScale(0.5, 0.52),
+		UDim2.fromScale(0.62, 0.68),
+		UDim2.fromScale(0.5, 0.5),
 		Theme.BgDark,
-		16,
+		14,
 		screenGui
 	)
 	modal.AnchorPoint = Vector2.new(0.5, 0.5)
 	modal.Visible = false
+	modal.ZIndex = 20
 	Theme.AddStroke(modal, Theme.BgHeader, 3)
 
-	local header = Theme.MakeFrame("Header", UDim2.new(1, 0, 0, 48), UDim2.fromScale(0, 0), Theme.BgHeader, 14, modal)
-	local title = Theme.MakeLabel("Title", titleText, UDim2.new(0.75, 0, 0.8, 0), UDim2.fromScale(0.04, 0.1), Theme.FontTitle, Theme.TextPrimary, header)
+	local sizeConstraint = Instance.new("UISizeConstraint")
+	sizeConstraint.MinSize = Vector2.new(300, 250)
+	sizeConstraint.MaxSize = Vector2.new(620, 440)
+	sizeConstraint.Parent = modal
+
+	local header = Theme.MakeFrame("Header", UDim2.new(1, 0, 0, 44), UDim2.fromScale(0, 0), Theme.BgHeader, 12, modal)
+	local title = Theme.MakeLabel("Title", titleText, UDim2.new(0.76, 0, 0.8, 0), UDim2.fromScale(0.04, 0.1), Theme.FontTitle, Theme.TextPrimary, header)
 	title.TextXAlignment = Enum.TextXAlignment.Left
 
-	local closeBtn = Theme.MakeButton("Close", "✕", UDim2.fromOffset(44, 38), UDim2.new(1, -50, 0, 5), Theme.AccentRed, header, onClose)
+	local closeBtn = Theme.MakeButton("Close", "✕", UDim2.fromOffset(38, 34), UDim2.new(1, -44, 0, 5), Theme.AccentRed, header, onClose)
 	closeBtn.AnchorPoint = Vector2.new(0, 0)
 
 	local content = Instance.new("Frame")
 	content.Name = "Content"
-	content.Size = UDim2.new(1, -24, 1, -64)
-	content.Position = UDim2.fromOffset(12, 54)
+	content.Size = UDim2.new(1, -20, 1, -56)
+	content.Position = UDim2.fromOffset(10, 48)
 	content.BackgroundTransparency = 1
 	content.Parent = modal
 

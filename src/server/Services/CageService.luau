@@ -71,10 +71,11 @@ end
 
 -- Helpers -------------------------------------------------------------------
 
-local function setCarryingState(player: Player, carryData: Carry?)
+local function setCarryingState(player: Player, carryData: Carry?, zoneName: string?)
 	carrying[player] = carryData
 	player:SetAttribute("IsCarryingCage", carryData ~= nil)
 	player:SetAttribute("CageSecured", if carryData then carryData.Secured else false)
+	player:SetAttribute("CarriedCageZone", if carryData then (zoneName or player:GetAttribute("CarriedCageZone") or "") else "")
 end
 
 local function getHumanoidAndRoot(player: Player): (Humanoid?, BasePart?)
@@ -196,7 +197,7 @@ function CageService.GetCarryMultiplier(player: Player): number
 	return Rarities.Get(pet.Rarity).CarrySpeedMultiplier
 end
 
-function CageService.DropCage(player: Player, reason: string?): boolean
+function CageService.DropCage(player: Player, reason: string?, catcherName: string?): boolean
 	local carry = carrying[player]
 	if not carry then
 		return false
@@ -210,13 +211,14 @@ function CageService.DropCage(player: Player, reason: string?): boolean
 		return false
 	end
 
-	setCarryingState(player, nil)
+	setCarryingState(player, nil, "")
 	carry.Cage:Destroy()
 	StatsService.Refresh(player)
 	scheduleRespawn(carry.Template, carry.Parent, Config.DroppedCageReturnSeconds)
 
 	if reason == "caught" then
-		ClientSyncService.Notify(player, "Caught! The cage went back to the prison.", Color3.fromRGB(255, 80, 80))
+		local bantayTitle = if typeof(catcherName) == "string" and catcherName ~= "" then catcherName else "BANTAY"
+		ClientSyncService.Notify(player, `🚨 Nahuli ka ng {bantayTitle}! Bumalik ang cage sa Zone.`, Color3.fromRGB(255, 80, 80))
 	end
 	return true
 end
@@ -277,6 +279,7 @@ function CageService.DropCageToGround(player: Player): boolean
 		droppedCage:SetAttribute("Taken", true)
 		CageService.AttachModelToPlayer(droppedCage, cRoot)
 
+		local droppedZone = droppedCage:GetAttribute("Zone")
 		setCarryingState(claimer, {
 			Cage = droppedCage,
 			PetId = carry.PetId,
@@ -285,7 +288,7 @@ function CageService.DropCageToGround(player: Player): boolean
 			Secured = cRoot.Position.Z > Config.SafeZoneZ,
 			Template = carry.Template,
 			Parent = carry.Parent,
-		})
+		}, if typeof(droppedZone) == "string" then droppedZone else nil)
 		StatsService.Refresh(claimer)
 		ClientSyncService.Notify(claimer, "🩴 Snatched the dropped cage!", Color3.fromRGB(100, 255, 130))
 	end)
@@ -323,10 +326,9 @@ local function buildPlotUnlockCageModel(worldPos: Vector3, pet: PetData.Pet, mut
 	body.Parent = cage
 	cage.PrimaryPart = body
 
-	local style = CageVisuals.PickStyleForPet(pet.Id, nil)
-	if pet.Id ~= "chicken" and pet.Id ~= "duckling" and typeof(cageStyle) == "string" and cageStyle ~= "" then
-		style = cageStyle
-	end
+	local style = if typeof(cageStyle) == "string" and cageStyle ~= ""
+		then cageStyle
+		else CageVisuals.PickStyleForPet(pet.Id, nil)
 	CageVisuals.PopulateCageModel(cage, worldPos, style, accent)
 
 	local gui = Instance.new("BillboardGui")
@@ -365,6 +367,30 @@ local function buildPlotUnlockCageModel(worldPos: Vector3, pet: PetData.Pet, mut
 	return cage, statusLabel
 end
 
+local function syncPlayerUnlockCages(player: Player)
+	local bucket = plotUnlockCages[player]
+	local list = {}
+	local now = os.clock()
+	if bucket then
+		for cageId, entry in bucket do
+			table.insert(list, {
+				Id = cageId,
+				PetId = entry.PetId,
+				Mutation = entry.Mutation,
+				Remaining = math.max(0, math.ceil(entry.UnlockAt - now)),
+				Ready = entry.Ready,
+			})
+		end
+	end
+	table.sort(list, function(a, b)
+		if a.Ready ~= b.Ready then
+			return a.Ready
+		end
+		return a.Remaining < b.Remaining
+	end)
+	Remotes.GetEvent("SyncUnlockingCages"):FireClient(player, list)
+end
+
 local function openUnlockedPlotCage(player: Player, cageId: string)
 	local bucket = plotUnlockCages[player]
 	local entry = if bucket then bucket[cageId] else nil
@@ -373,6 +399,7 @@ local function openUnlockedPlotCage(player: Player, cageId: string)
 	end
 
 	bucket[cageId] = nil
+	syncPlayerUnlockCages(player)
 
 	local pet = PetData.Get(entry.PetId)
 	if pet and entry.Model.PrimaryPart then
@@ -525,6 +552,7 @@ local function tryPlaceCarriedCageOnPlot(player: Player, requestedPos: Vector3?)
 		StatusLabel = statusLabel,
 	}
 	bucket[cageId] = entry
+	syncPlayerUnlockCages(player)
 
 	ClientSyncService.Notify(player, `⏳ Cage placed on your plot! Unlocking in {unlockDuration}s...`, Color3.fromRGB(110, 215, 255))
 	CageDeliveredEvent:Fire(player, carry.PetId)
@@ -592,7 +620,7 @@ local function onCageTriggered(cage: Model, prompt: ProximityPrompt, player: Pla
 		Secured = false,
 		Template = template,
 		Parent = parent,
-	})
+	}, zone)
 
 	StatsService.Refresh(player)
 	CagePickedUpEvent:Fire(player, petId)
@@ -662,6 +690,31 @@ end
 function CageService.Init()
 	StatsService.AddSpeedModifier("Carry", CageService.GetCarryMultiplier)
 	Remotes.GetEvent("CageOpenedAnim")
+	Remotes.GetEvent("SyncUnlockingCages")
+
+	local remoteOpenEvent = Remotes.GetEvent("RemoteOpenPlotCage")
+	remoteOpenEvent.OnServerEvent:Connect(function(player: Player, targetId: any)
+		if not RateLimiter.Check(player, "RemoteOpenPlotCage", 0.15) then
+			return
+		end
+		local bucket = plotUnlockCages[player]
+		if not bucket then
+			return
+		end
+		if targetId == "ALL" then
+			local readyIds = {}
+			for id, entry in bucket do
+				if entry.Ready then
+					table.insert(readyIds, id)
+				end
+			end
+			for _, id in readyIds do
+				openUnlockedPlotCage(player, id)
+			end
+		elseif typeof(targetId) == "string" then
+			openUnlockedPlotCage(player, targetId)
+		end
+	end)
 
 	local placeCageEvent = Remotes.GetEvent("PlaceCageOnPlot")
 	placeCageEvent.OnServerEvent:Connect(function(player: Player, hitPos: any)
@@ -717,6 +770,7 @@ function CageService.Init()
 		if now - lastTimerTick >= 0.25 then
 			lastTimerTick = now
 			for player, bucket in plotUnlockCages do
+				local anyChanged = false
 				for cageId, entry in bucket do
 					if not entry.Ready then
 						local rem = math.ceil(entry.UnlockAt - now)
@@ -724,6 +778,7 @@ function CageService.Init()
 							entry.StatusLabel.Text = `⏳ Unlocking... {rem}s`
 						else
 							entry.Ready = true
+							anyChanged = true
 							entry.StatusLabel.Text = "✨ READY! Press E to Open!"
 							entry.StatusLabel.TextColor3 = Color3.fromRGB(80, 255, 120)
 
@@ -745,6 +800,9 @@ function CageService.Init()
 							end
 						end
 					end
+				end
+				if anyChanged then
+					syncPlayerUnlockCages(player)
 				end
 			end
 		end

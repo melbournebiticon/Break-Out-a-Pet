@@ -102,7 +102,7 @@ function StatsService.UpdatePlotTreadmillVisuals(player: Player)
 								end
 								if labels[2] then
 									local upText = if price then `Upgrade: {NumberFormat.Short(price)}` else "MAX TIER!"
-									labels[2].Text = string.format("+%.2f Speed/sec • %s", gain, upText)
+									labels[2].Text = `+{NumberFormat.Short(gain)} Speed/sec • {upText}`
 								end
 							end
 						end
@@ -114,7 +114,7 @@ function StatsService.UpdatePlotTreadmillVisuals(player: Player)
 					prompt.ActionText = if price
 						then `Upgrade Treadmill ({NumberFormat.Short(price)})`
 						else "Max Tier Reached"
-					prompt.ObjectText = string.format("%s • Tier %d (+%.2f Speed/s)", tierInfo.Name, tier, gain)
+					prompt.ObjectText = `{tierInfo.Name} • Tier {tier} (+{NumberFormat.Short(gain)} Speed/s)`
 				end
 			end
 		end
@@ -144,7 +144,7 @@ function StatsService.AddTrainedSpeed(player: Player, delta: number)
 	if not profile or delta <= 0 then
 		return
 	end
-	profile.TrainedSpeed = math.clamp(math.floor((profile.TrainedSpeed + delta) * 100 + 0.5) / 100, 0, 120)
+	profile.TrainedSpeed = math.clamp(math.floor((profile.TrainedSpeed + delta) * 100 + 0.5) / 100, 0, 999999999)
 	player:SetAttribute("TrainedSpeed", profile.TrainedSpeed)
 	DataService.MarkDirty(player)
 	StatsService.Refresh(player)
@@ -162,8 +162,14 @@ function StatsService.SetSpeedLevel(player: Player, level: number)
 	StatsService.UpdatePlotTreadmillVisuals(player)
 end
 
-function StatsService.GetBaseWalkSpeed(player: Player): number
+function StatsService.GetTotalSpeedStat(player: Player): number
 	return Config.BaseWalkSpeed + StatsService.GetTrainedSpeed(player)
+end
+
+function StatsService.GetBaseWalkSpeed(player: Player): number
+	local totalStat = StatsService.GetTotalSpeedStat(player)
+	player:SetAttribute("TotalSpeedStat", totalStat)
+	return ShopData.StatToPhysicalWalkSpeed(totalStat)
 end
 
 function StatsService.Refresh(player: Player)
@@ -273,14 +279,18 @@ local function watchPlayer(player: Player)
 	player:SetAttribute("TrainedSpeed", profile.TrainedSpeed)
 	player:SetAttribute("SlowMode", false)
 
-	player.CharacterAdded:Connect(function()
+	player.CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid", 5)
 		task.defer(function()
 			StatsService.Refresh(player)
 		end)
 	end)
 
 	if player.Character then
-		StatsService.Refresh(player)
+		task.spawn(function()
+			player.Character:WaitForChild("Humanoid", 5)
+			StatsService.Refresh(player)
+		end)
 	end
 	task.delay(1.0, function()
 		if player.Parent then

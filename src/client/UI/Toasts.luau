@@ -14,7 +14,7 @@ local VfxController = require(script.Parent.Parent:WaitForChild("VfxController")
 local Toasts = {}
 
 local container: Frame
-local MAX_TOASTS = 3
+local MAX_TOASTS = 1
 
 function Toasts.Show(message: string, color: Color3?, subtitle: string?)
 	if not container then
@@ -33,12 +33,14 @@ function Toasts.Show(message: string, color: Color3?, subtitle: string?)
 	end
 
 	local hasSub = typeof(subtitle) == "string" and subtitle ~= ""
-	local height = if hasSub then 62 else 42
+	local height = if hasSub then 44 else 32
 	local accent = color or Theme.AccentGold
 
-	local toast = Theme.MakeFrame("Toast", UDim2.new(1, 0, 0, height), UDim2.fromScale(0, 0), Color3.fromRGB(16, 19, 28), 20, container)
-	toast.BackgroundTransparency = 0.08
-	Theme.AddStroke(toast, accent, 2.5)
+	local toast = Theme.MakeFrame("Toast", UDim2.new(1, 0, 0, height), UDim2.fromScale(0, 0), Color3.fromRGB(16, 19, 28), 16, container)
+	toast.BackgroundTransparency = 0.18
+	toast.Active = false
+	toast.Interactable = false
+	Theme.AddStroke(toast, accent, 2)
 
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new(Color3.fromRGB(32, 38, 56), Color3.fromRGB(18, 20, 30))
@@ -80,16 +82,16 @@ function Toasts.Show(message: string, color: Color3?, subtitle: string?)
 		SoundController.Play("Deliver")
 	end
 
-	local holdTime = if hasSub then 3.4 else 2.8
+	local holdTime = if hasSub then 1.05 else 0.95
 	task.delay(holdTime, function()
 		if toast.Parent then
-			TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.85 }):Play()
-			TweenService:Create(toast, TweenInfo.new(0.22), { BackgroundTransparency = 1 }):Play()
-			TweenService:Create(titleLbl, TweenInfo.new(0.22), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+			TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.85 }):Play()
+			TweenService:Create(toast, TweenInfo.new(0.14), { BackgroundTransparency = 1 }):Play()
+			TweenService:Create(titleLbl, TweenInfo.new(0.14), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
 			if subLbl then
-				TweenService:Create(subLbl, TweenInfo.new(0.22), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+				TweenService:Create(subLbl, TweenInfo.new(0.14), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
 			end
-			task.wait(0.24)
+			task.wait(0.15)
 			if toast.Parent then
 				toast:Destroy()
 			end
@@ -100,10 +102,12 @@ end
 function Toasts.Init(screenGui: ScreenGui)
 	container = Instance.new("Frame")
 	container.Name = "ToastContainer"
-	container.Size = UDim2.new(0, 420, 0, 200)
-	container.Position = UDim2.new(0.5, 0, 0, 14)
+	container.Size = UDim2.new(0, 310, 0, 56)
+	container.Position = UDim2.new(0.5, 0, 0, 8)
 	container.AnchorPoint = Vector2.new(0.5, 0)
 	container.BackgroundTransparency = 1
+	container.Active = false
+	container.Interactable = false
 	container.ZIndex = 25
 	container.Parent = screenGui
 

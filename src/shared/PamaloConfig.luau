@@ -198,6 +198,34 @@ function PamaloConfig.BuildToolParts(toolId: string, baseCF: CFrame, parent: Ins
 		for _, part in created do
 			weldParts(handle, part)
 		end
+
+		-- Add a dynamic swoosh trail for clean slap swing visuals!
+		local att0 = Instance.new("Attachment")
+		att0.Name = "TrailBase"
+		att0.Position = Vector3.new(0, -0.4, 0)
+		att0.Parent = handle
+
+		local att1 = Instance.new("Attachment")
+		att1.Name = "TrailTip"
+		att1.Position = Vector3.new(0, 1.8, 0)
+		att1.Parent = handle
+
+		local trail = Instance.new("Trail")
+		trail.Name = "SwingTrail"
+		trail.Attachment0 = att0
+		trail.Attachment1 = att1
+		trail.Lifetime = 0.16
+		trail.FaceCamera = true
+		trail.LightEmission = 0.8
+		trail.Color = ColorSequence.new(
+			if toolId == "gintong_tsinelas" then Color3.fromRGB(255, 225, 75) else Color3.fromRGB(240, 250, 255)
+		)
+		trail.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.15),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		trail.Enabled = false
+		trail.Parent = handle
 	end
 
 	return handle
