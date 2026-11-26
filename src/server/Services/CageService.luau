@@ -185,16 +185,8 @@ function CageService.GetCarriedCage(player: Player): Model?
 	return if carry then carry.Cage else nil
 end
 
-function CageService.GetCarryMultiplier(player: Player): number
-	local carry = carrying[player]
-	if not carry or carry.Secured then
-		return 1
-	end
-	local pet = PetData.Get(carry.PetId)
-	if not pet then
-		return 1
-	end
-	return Rarities.Get(pet.Rarity).CarrySpeedMultiplier
+function CageService.GetCarryMultiplier(_player: Player): number
+	return 1
 end
 
 function CageService.DropCage(player: Player, reason: string?, catcherName: string?): boolean

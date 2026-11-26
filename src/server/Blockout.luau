@@ -323,7 +323,7 @@ function Blockout.EnsureMap()
 	end
 
 	local existingPrison = workspace:FindFirstChild("Prison")
-	if existingPrison and not existingPrison:GetAttribute("RedesignedV19") then
+	if existingPrison and not existingPrison:GetAttribute("RedesignedV20") then
 		existingPrison:Destroy()
 		for _, folderName in { "BasePlots", "Lobby", "PatrolPoints", "EnemySpawns", "Enemies" } do
 			local f = workspace:FindFirstChild(folderName)
@@ -338,7 +338,7 @@ function Blockout.EnsureMap()
 	if not prison then
 		prison = Instance.new("Folder")
 		prison.Name = "Prison"
-		prison:SetAttribute("RedesignedV19", true)
+		prison:SetAttribute("RedesignedV20", true)
 		prison.Parent = workspace
 
 		local safeLine = makePart("SafeZoneLine", Vector3.new(84, 0.35, 3.5), Vector3.new(0, 0.9, -47.5), Color3.fromRGB(60, 255, 120), prison, Enum.Material.Neon)
@@ -524,8 +524,8 @@ function Blockout.EnsureMap()
 			CollectionService:AddTag(floor, "PlotFloor")
 			buildPlotFence(plot, floor.Position, 29.5)
 
-			-- Personal Upgradable Treadmill right on each player's own Plot!
-			buildPlotTreadmill(plot, floor.Position + Vector3.new(21.5, 0.5, -18.5))
+			-- Personal Upgradable Treadmill placed right OUTSIDE the front-right of each player's Plot!
+			buildPlotTreadmill(plot, floor.Position + Vector3.new(21.5, 0.0, -37.5))
 
 			local drop = makePart("DropZone", Vector3.new(58, 2, 58), Vector3.new(x, 1.5, 62), Color3.fromRGB(55, 235, 115), plot, Enum.Material.SmoothPlastic)
 			drop.Transparency = 1

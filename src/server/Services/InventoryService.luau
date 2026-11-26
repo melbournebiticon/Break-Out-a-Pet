@@ -151,13 +151,23 @@ local function syncBackpackPetTools(player: Player, pets: { OwnedPet })
 				local petScale = if typeof(petScaleAttr) == "number" and petScaleAttr > 0
 					then petScaleAttr
 					else (if typeof(info.Scale) == "number" and info.Scale > 0 then info.Scale else 1)
-				local toolScaleFactor = 0.45 / petScale
+				-- If Semi-Titanic or Titanic (petScale > 1), keep the EXACT same full size in hand as on the plot (1:1)!
+				local toolScaleFactor = if petScale > 1 then 1.0 else 0.45
+				local pivotPos = handle.Position
 				for _, desc in visual:GetDescendants() do
 					if desc:IsA("BasePart") then
-						desc.Size *= toolScaleFactor
+						if toolScaleFactor ~= 1.0 then
+							desc.Size *= toolScaleFactor
+							local rel = desc.CFrame.Position - pivotPos
+							local rot = desc.CFrame - desc.CFrame.Position
+							desc.CFrame = CFrame.new(pivotPos + rel * toolScaleFactor) * rot
+						end
 						desc.Anchored = false
 						desc.Massless = true
 					end
+				end
+				if petScale > 1 then
+					tool.Grip = CFrame.new(0, -1.1 * petScale, 0)
 				end
 				visual.Parent = tool
 				if visual.PrimaryPart then

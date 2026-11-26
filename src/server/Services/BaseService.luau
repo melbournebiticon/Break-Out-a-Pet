@@ -59,6 +59,13 @@ local function buildPetModel(owned: InventoryService.OwnedPet, spawnPos: Vector3
 
 	local centerCF = CFrame.new(spawnPos)
 	local model = PetVisuals.BuildModel(owned.PetId, owned.Mutation, centerCF)
+	local petScaleAttr = model:GetAttribute("PetScale")
+	local petScale = if typeof(petScaleAttr) == "number" and petScaleAttr > 0 then petScaleAttr else 1
+	if petScale > 1 then
+		-- Lift scaled Semi-Titanic / Titanic pets so their feet/belly rest cleanly on top of the grass floor!
+		model:PivotTo(CFrame.new(spawnPos + Vector3.new(0, 1.1 * (petScale - 1), 0)))
+	end
+
 	model.Name = `PetModel_{owned.Uid}`
 	model:SetAttribute("Uid", owned.Uid)
 	model:SetAttribute("PetId", owned.PetId)
@@ -66,11 +73,12 @@ local function buildPetModel(owned: InventoryService.OwnedPet, spawnPos: Vector3
 
 	local primary = model.PrimaryPart
 	if primary then
+		local guiScale = math.min(3.5, petScale)
 		local gui = Instance.new("BillboardGui")
 		gui.Name = "PetInfo"
-		gui.Size = UDim2.fromScale(3.6, 1.35)
-		gui.StudsOffset = Vector3.new(0, 2.3, 0)
-		gui.MaxDistance = 38
+		gui.Size = UDim2.fromScale(3.6 * guiScale, 1.35 * guiScale)
+		gui.StudsOffset = Vector3.new(0, 2.3 * petScale, 0)
+		gui.MaxDistance = 42 + petScale * 10
 		gui.AlwaysOnTop = false
 		gui.Adornee = primary
 

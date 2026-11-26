@@ -961,14 +961,15 @@ local function stepEnemy(enemy: Enemy, now: number)
 
 	local chaseElapsed = math.max(0, now - enemy.ChaseStartedAt)
 	if playerStat >= reqStat then
-		local overRatio = math.clamp(playerStat / math.max(1, reqStat), 1, 3)
-		-- At exact reqStat: 90% of player's carried speed; at 2x+ reqStat (e.g. 38M in 18M zone): 80% of player's carried speed!
-		local capRatio = 0.90 - ((overRatio - 1) / 2) * 0.12
-		local ramp = math.min(0.04, chaseElapsed * 0.004)
-		enemy.Humanoid.WalkSpeed = math.max(12, playerCarriedWalkSpeed * (capRatio + ramp))
+		local overRatio = math.clamp(playerStat / math.max(1, reqStat), 1, 4)
+		-- Right at reqStat (1.0x): Bantay runs at 96%..98.5% of player's WalkSpeed for a thrilling neck-and-neck chase!
+		-- At 4x+ reqStat: drops to 84% of player's WalkSpeed.
+		local capRatio = 0.96 - ((overRatio - 1) / 3) * 0.12
+		local ramp = math.min(0.025, chaseElapsed * 0.003)
+		enemy.Humanoid.WalkSpeed = math.max(14, playerCarriedWalkSpeed * (capRatio + ramp))
 	else
 		local deficit = math.clamp(1 - (playerStat / math.max(1, reqStat)), 0.05, 1)
-		local catchMult = 1.08 + deficit * 0.24
+		local catchMult = 1.07 + deficit * 0.23
 		local ramp = math.min(6, chaseElapsed * 0.8)
 		enemy.Humanoid.WalkSpeed = math.max(enemy.BaseChaseSpeed, playerCarriedWalkSpeed * catchMult + ramp)
 	end
