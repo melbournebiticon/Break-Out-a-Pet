@@ -22,6 +22,7 @@ export type SavedPet = {
 	SlotIndex: number?,
 	Equipped: boolean,
 	Mutation: string?,
+	Scale: number?,
 	InTransit: boolean?,
 }
 

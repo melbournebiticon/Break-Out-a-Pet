@@ -103,32 +103,28 @@ local function scheduleRespawn(template: Model?, parent: Instance?, delaySeconds
 	end)
 end
 
-function CageService.AddRevealLabel(cage: Model, pet: PetData.Pet, mutation: string?)
+function CageService.AddRevealLabel(cage: Model, _pet: PetData.Pet, _mutation: string?)
 	local primary = cage.PrimaryPart
 	if not primary then
 		return
 	end
-	local rarity = Rarities.Get(pet.Rarity)
-	local mutInfo = MutationData.Get(mutation)
 
 	local gui = Instance.new("BillboardGui")
-	gui.Name = "PetReveal"
-	gui.Size = UDim2.fromScale(4.2, 1.1)
-	gui.StudsOffset = Vector3.new(0, 3.6, 0)
-	gui.MaxDistance = 42
+	gui.Name = "CarriedCageTag"
+	gui.Size = UDim2.fromScale(4.2, 1.15)
+	gui.StudsOffset = Vector3.new(0, 2.7, 0)
+	gui.MaxDistance = 48
 	gui.AlwaysOnTop = false
 	gui.Adornee = primary
-	gui:SetAttribute("Rarity", pet.Rarity)
 
-	local prefix = if mutInfo then `{mutInfo.Name} ` else ""
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.FredokaOne
 	label.TextScaled = true
-	label.TextColor3 = if mutInfo then mutInfo.Color else rarity.Color
+	label.TextColor3 = Color3.fromRGB(255, 215, 70)
 	label.TextStrokeTransparency = 0
-	label.Text = `🔒 {pet.Rarity} Cage ({prefix}{pet.DisplayName})`
+	label.Text = "🔒 Mystery Cage (???)"
 	label.Parent = gui
 
 	gui.Parent = primary
@@ -299,10 +295,9 @@ end
 
 -- Plot Cage Free-Placement, Unlocking & Opening -----------------------------
 
-local function buildPlotUnlockCageModel(worldPos: Vector3, pet: PetData.Pet, mutation: string?, cageStyle: string?, parent: Instance): (Model, TextLabel)
+local function buildPlotUnlockCageModel(worldPos: Vector3, pet: PetData.Pet, _mutation: string?, cageStyle: string?, parent: Instance): (Model, TextLabel)
 	local rarity = Rarities.Get(pet.Rarity)
-	local mutInfo = MutationData.Get(mutation)
-	local accent = if mutInfo then mutInfo.Color else rarity.Color
+	local accent = rarity.Color
 
 	local cage = Instance.new("Model")
 	cage.Name = "UnlockingCage"
@@ -331,15 +326,14 @@ local function buildPlotUnlockCageModel(worldPos: Vector3, pet: PetData.Pet, mut
 	gui.AlwaysOnTop = false
 	gui.Adornee = body
 
-	local prefix = if mutInfo then `[{mutInfo.Name}] ` else ""
 	local title = Instance.new("TextLabel")
 	title.Size = UDim2.new(1, 0, 0.48, 0)
 	title.BackgroundTransparency = 1
 	title.Font = Enum.Font.FredokaOne
 	title.TextScaled = true
-	title.TextColor3 = accent
+	title.TextColor3 = Color3.fromRGB(255, 225, 95)
 	title.TextStrokeTransparency = 0.05
-	title.Text = `{pet.Emoji} {prefix}{pet.DisplayName}`
+	title.Text = "📦 Mystery Cage (???)"
 	title.Parent = gui
 
 	local statusLabel = Instance.new("TextLabel")
@@ -393,6 +387,11 @@ local function openUnlockedPlotCage(player: Player, cageId: string)
 	bucket[cageId] = nil
 	syncPlayerUnlockCages(player)
 
+	-- Roll the surprise Mutation / Semi-Titanic / Titanic right when the cage is OPENED!
+	local luckUntilAttr = player:GetAttribute("FiestaLuckBoostUntil")
+	local hasFiestaLuck = typeof(luckUntilAttr) == "number" and luckUntilAttr > workspace:GetServerTimeNow()
+	local rolledMutation = MutationData.RollMutation(if hasFiestaLuck then 2.0 else 1.0)
+
 	local pet = PetData.Get(entry.PetId)
 	if pet and entry.Model.PrimaryPart then
 		local burstGui = Instance.new("BillboardGui")
@@ -403,7 +402,7 @@ local function openUnlockedPlotCage(player: Player, cageId: string)
 	end
 
 	-- Fire 3D jump-to-player animation event before destroying the cage
-	Remotes.GetEvent("CageOpenedAnim"):FireClient(player, entry.Position, entry.PetId, entry.Mutation)
+	Remotes.GetEvent("CageOpenedAnim"):FireClient(player, entry.Position, entry.PetId, rolledMutation)
 
 	task.delay(0.12, function()
 		if entry.Model.Parent then
@@ -412,7 +411,7 @@ local function openUnlockedPlotCage(player: Player, cageId: string)
 	end)
 
 	-- Add the unlocked pet directly to the player's Bag ("Stored")!
-	InventoryService.AddPetToBag(player, entry.PetId, entry.Mutation)
+	InventoryService.AddPetToBag(player, entry.PetId, rolledMutation)
 
 	local profile = DataService.GetProfile(player)
 	if profile then
@@ -422,11 +421,12 @@ local function openUnlockedPlotCage(player: Player, cageId: string)
 
 	if pet then
 		local rarity = Rarities.Get(pet.Rarity)
-		local mutPrefix = if entry.Mutation then `{entry.Mutation} ` else ""
+		local mutInfo = MutationData.Get(rolledMutation)
+		local mutPrefix = if rolledMutation then `[{rolledMutation}] ` else ""
 		ClientSyncService.Notify(
 			player,
-			`🎉 Opened {pet.Emoji} {mutPrefix}{pet.DisplayName}! Added to your Bag (Pets)!`,
-			rarity.Color
+			`🎉 Opened {pet.Emoji} {mutPrefix}{pet.DisplayName}!`,
+			if mutInfo then mutInfo.Color else rarity.Color
 		)
 	end
 end
@@ -530,6 +530,10 @@ local function tryPlaceCarriedCageOnPlot(player: Player, requestedPos: Vector3?)
 	scheduleRespawn(carry.Template, carry.Parent, Config.CageRespawnSeconds)
 
 	local unlockDuration = Config.CageUnlockSeconds[pet.Rarity] or 6
+	local luckUntilAttr = player:GetAttribute("FiestaLuckBoostUntil")
+	if typeof(luckUntilAttr) == "number" and luckUntilAttr > workspace:GetServerTimeNow() then
+		unlockDuration = math.max(2, math.floor(unlockDuration * 0.5))
+	end
 	local model, statusLabel = buildPlotUnlockCageModel(placePos, pet, carry.Mutation, carry.CageStyle, plot)
 	local cageId = HttpService:GenerateGUID(false)
 
@@ -594,7 +598,8 @@ local function onCageTriggered(cage: Model, prompt: ProximityPrompt, player: Pla
 		return
 	end
 
-	local mutation = MutationData.RollMutation()
+	-- Mutation / Titanic is kept a surprise until the cage is unlocked and opened on the plot!
+	local mutation: string? = nil
 
 	cage:SetAttribute("Taken", true)
 	prompt:Destroy()
@@ -715,6 +720,16 @@ function CageService.Init()
 		end
 		local validPos: Vector3? = if typeof(hitPos) == "Vector3" then hitPos else nil
 		tryPlaceCarriedCageOnPlot(player, validPos)
+	end)
+
+	local dropCageEvent = Remotes.GetEvent("DropCarriedCage")
+	dropCageEvent.OnServerEvent:Connect(function(player: Player)
+		if not RateLimiter.Check(player, "DropCarriedCage", 0.25) then
+			return
+		end
+		if CageService.DropCage(player, "manual") then
+			ClientSyncService.Notify(player, "🗑️ Dropped cage!", Color3.fromRGB(255, 175, 70))
+		end
 	end)
 
 	for _, instance in CollectionService:GetTagged("Cage") do

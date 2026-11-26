@@ -30,8 +30,8 @@ local Config = {
 	-- Base & Economy
 	StartingMoney = 0,
 	StartingPetSlots = 3,
-	MaxPetSlots = 12,
-	ExtraPassPetSlots = 2,
+	MaxPetSlots = 25,
+	ExtraPassPetSlots = 5,
 	IncomeTickSeconds = 1,
 
 	-- DataStore & Offline Earnings

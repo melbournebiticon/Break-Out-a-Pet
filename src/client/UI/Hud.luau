@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -14,6 +15,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local ShopData = require(Shared:WaitForChild("ShopData"))
 local PetData = require(Shared:WaitForChild("PetData"))
+local PetVisuals = require(Shared:WaitForChild("PetVisuals"))
+local PamaloConfig = require(Shared:WaitForChild("PamaloConfig"))
 local Rarities = require(Shared:WaitForChild("Rarities"))
 local MutationData = require(Shared:WaitForChild("MutationData"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
@@ -42,7 +45,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone1",
 		Title = "🌾 ZONE 1 — BUKID & SABUNGAN",
-		Rarities = "Manok, Itik, Puspin, Kuneho, Aspin, Kalabaw • Speed 900+",
+		Rarities = "Recommended Speed: 900+",
 		MinZ = -200,
 		MaxZ = -50,
 		Color = Color3.fromRGB(145, 235, 110),
@@ -50,7 +53,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone2",
 		Title = "🏪 ZONE 2 — PALENGKE & TIANGGE",
-		Rarities = "Pagong, Golden Bangus, Alimango, Golden Baboy • Speed 10K+",
+		Rarities = "Recommended Speed: 3.5K+",
 		MinZ = -350,
 		MaxZ = -200,
 		Color = Color3.fromRGB(255, 195, 70),
@@ -58,7 +61,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone3",
 		Title = "🏛️ ZONE 3 — HACIENDA COMPOUND",
-		Rarities = "Bayawak, Pawikan, Tarsier, Hunyanggo • Speed 40K+",
+		Rarities = "Recommended Speed: 10K+",
 		MinZ = -500,
 		MaxZ = -350,
 		Color = Color3.fromRGB(255, 140, 85),
@@ -66,7 +69,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone4",
 		Title = "🌴 ZONE 4 — BOHOL & PALAWAN GUBAT",
-		Rarities = "Pilandok, Agila, Butanding, Ibong Adarna • Speed 170K+",
+		Rarities = "Recommended Speed: 25K+",
 		MinZ = -650,
 		MaxZ = -500,
 		Color = Color3.fromRGB(95, 235, 175),
@@ -74,7 +77,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone5",
 		Title = "🌋 ZONE 5 — BULKANG MAYON RIDGE",
-		Rarities = "Tamaraw, Sigbin, Minokawa, Butanding • Speed 750K+",
+		Rarities = "Recommended Speed: 60K+",
 		MinZ = -800,
 		MaxZ = -650,
 		Color = Color3.fromRGB(255, 95, 65),
@@ -82,7 +85,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone6",
 		Title = "👑 ZONE 6 — INTRAMUROS ROYAL VAULT",
-		Rarities = "Sarimanok, Chibi Tikbalang, Baby Bakunawa • Speed 3.5M+",
+		Rarities = "Recommended Speed: 140K+",
 		MinZ = -950,
 		MaxZ = -800,
 		Color = Color3.fromRGB(255, 215, 55),
@@ -90,7 +93,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone7",
 		Title = "🌸 ZONE 7 — MYTHICAL SANCTUARY",
-		Rarities = "Hamster, Raccoon, Panda, Octopus, Mini Dragon • Speed 18M+",
+		Rarities = "Recommended Speed: 320K+",
 		MinZ = -1100,
 		MaxZ = -950,
 		Color = Color3.fromRGB(255, 140, 200),
@@ -98,7 +101,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone8",
 		Title = "🌌 ZONE 8 — CELESTIAL VAULT",
-		Rarities = "Diamond Capybara, Wolf, Shadow Kitsune, Rainbow Unicorn • Speed 90M+",
+		Rarities = "Recommended Speed: 750K+",
 		MinZ = -1255,
 		MaxZ = -1100,
 		Color = Color3.fromRGB(0, 245, 225),
@@ -106,7 +109,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone9",
 		Title = "⚔️ ZONE 9 — VALHALLA COLISEUM",
-		Rarities = "Mecha Lion, Void Phoenix, Semi-Titanic Typhon • Speed 450M+",
+		Rarities = "Recommended Speed: 1.7M+",
 		MinZ = -1400,
 		MaxZ = -1255,
 		Color = Color3.fromRGB(120, 215, 255),
@@ -114,7 +117,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone10",
 		Title = "🔱 ZONE 10 — OLYMPUS TITAN REALM",
-		Rarities = "Semi-Titanic Hydra/Golem, Titanic Kalabaw (8.2x) • Speed 2.2B+",
+		Rarities = "Recommended Speed: 3.8M+",
 		MinZ = -1550,
 		MaxZ = -1400,
 		Color = Color3.fromRGB(255, 165, 45),
@@ -122,7 +125,7 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone11",
 		Title = "🐉 ZONE 11 — DRAGON EMPEROR CITADEL",
-		Rarities = "Titanic Agila (9x), Bakunawa (10x), Celestial Dragon (10.5x) • Speed 12B+",
+		Rarities = "Recommended Speed: 8.5M+",
 		MinZ = -1700,
 		MaxZ = -1550,
 		Color = Color3.fromRGB(255, 55, 85),
@@ -130,10 +133,74 @@ local ZONES: { ZoneMeta } = {
 	{
 		Id = "Zone12",
 		Title = "👑 ZONE 12 — BATHALA INFINITY THRONE",
-		Rarities = "Titanic Sarimanok (11x), Godly Bathala & Astral Leviathan • Speed 65B+",
-		MinZ = -1855,
+		Rarities = "Recommended Speed: 19M+",
+		MinZ = -1850,
 		MaxZ = -1700,
 		Color = Color3.fromRGB(255, 225, 95),
+	},
+	{
+		Id = "Zone13",
+		Title = "❄️ ZONE 13 — FROSTBITE GLACIER KEEP",
+		Rarities = "Recommended Speed: 42M+",
+		MinZ = -2000,
+		MaxZ = -1850,
+		Color = Color3.fromRGB(120, 235, 255),
+	},
+	{
+		Id = "Zone14",
+		Title = "🏜️ ZONE 14 — PHARAOH GOLDEN PYRAMID",
+		Rarities = "Recommended Speed: 95M+",
+		MinZ = -2150,
+		MaxZ = -2000,
+		Color = Color3.fromRGB(255, 215, 55),
+	},
+	{
+		Id = "Zone15",
+		Title = "🌊 ZONE 15 — ATLANTIS ABYSSAL TRENCH",
+		Rarities = "Recommended Speed: 210M+",
+		MinZ = -2300,
+		MaxZ = -2150,
+		Color = Color3.fromRGB(0, 255, 215),
+	},
+	{
+		Id = "Zone16",
+		Title = "⚡ ZONE 16 — CYBER NEON METROPOLIS",
+		Rarities = "Recommended Speed: 460M+",
+		MinZ = -2450,
+		MaxZ = -2300,
+		Color = Color3.fromRGB(0, 245, 255),
+	},
+	{
+		Id = "Zone17",
+		Title = "🩸 ZONE 17 — UNDERWORLD HADES CORE",
+		Rarities = "Recommended Speed: 1.0B+",
+		MinZ = -2600,
+		MaxZ = -2450,
+		Color = Color3.fromRGB(255, 75, 45),
+	},
+	{
+		Id = "Zone18",
+		Title = "☄️ ZONE 18 — ASTRAL NEBULA DIMENSION",
+		Rarities = "Recommended Speed: 2.2B+",
+		MinZ = -2750,
+		MaxZ = -2600,
+		Color = Color3.fromRGB(235, 110, 255),
+	},
+	{
+		Id = "Zone19",
+		Title = "⏳ ZONE 19 — CHRONOS TIME CITADEL",
+		Rarities = "Recommended Speed: 5.0B+",
+		MinZ = -2900,
+		MaxZ = -2750,
+		Color = Color3.fromRGB(110, 255, 230),
+	},
+	{
+		Id = "Zone20",
+		Title = "✨ ZONE 20 — OMNIVERSE GODLY SANCTUARY",
+		Rarities = "Recommended Speed: 12B+",
+		MinZ = -3055,
+		MaxZ = -2900,
+		Color = Color3.fromRGB(255, 240, 140),
 	},
 }
 
@@ -162,10 +229,10 @@ end
 function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	local player = Players.LocalPlayer
 
-	-- LEFT-SIDE STATS HUD (Total Money + Character Speed + Slow Mode Toggle)
+	-- LEFT-SIDE STATS HUD (Total Money + Character Speed + Slow Mode Toggle + Active Fiesta Boosts)
 	local leftStats = Instance.new("Frame")
 	leftStats.Name = "LeftStatsHud"
-	leftStats.Size = UDim2.fromOffset(185, 166)
+	leftStats.Size = UDim2.fromOffset(195, 290)
 	leftStats.Position = UDim2.new(0, 16, 0.5, 0)
 	leftStats.AnchorPoint = Vector2.new(0, 0.5)
 	leftStats.BackgroundTransparency = 1
@@ -189,19 +256,94 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	local speedLabel = Theme.MakeLabel("SpeedLabel", "⚡ Speed: 16.0", UDim2.fromScale(0.90, 0.74), UDim2.fromScale(0.05, 0.13), Theme.FontTitle, Color3.fromRGB(120, 215, 255), speedCard)
 	speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 
+	-- Music Toggle & Slow Mode Button Row
+	local utilityRow = Instance.new("Frame")
+	utilityRow.Name = "UtilityRow"
+	utilityRow.Size = UDim2.fromOffset(180, 38)
+	utilityRow.BackgroundTransparency = 1
+	utilityRow.Parent = leftStats
+
 	-- 3) Slow Mode Toggle Button (Like Steal a Pet!)
 	local slowModeEvent = Remotes.GetEvent("ToggleSlowMode")
-	local slowBtn = Theme.MakeButton("SlowModeBtn", "🐢 Slow Mode: OFF", UDim2.fromOffset(180, 38), UDim2.fromScale(0, 0), Theme.BgCard, leftStats, function()
+	local slowBtn = Theme.MakeButton("SlowModeBtn", "🐢 Slow: OFF", UDim2.fromOffset(128, 38), UDim2.fromScale(0, 0), Theme.BgCard, utilityRow, function()
 		slowModeEvent:FireServer()
 	end)
 	Theme.AddStroke(slowBtn, Theme.BgHeader, 2)
 	local function updateSlowBtn()
 		local isSlow = player:GetAttribute("SlowMode") == true
-		slowBtn.Text = if isSlow then "🐢 Slow Mode: ON" else "🐢 Slow Mode: OFF"
+		slowBtn.Text = if isSlow then "🐢 Slow: ON" else "🐢 Slow: OFF"
 		slowBtn.BackgroundColor3 = if isSlow then Theme.AccentGreen else Theme.BgCard
 	end
 	player:GetAttributeChangedSignal("SlowMode"):Connect(updateSlowBtn)
 	updateSlowBtn()
+
+	-- 3b) BGM Music Mute/Unmute Button (Grow a Garden BGM)
+	local musicBtn = Theme.MakeButton("MusicBtn", "🎵", UDim2.fromOffset(46, 38), UDim2.fromOffset(134, 0), Theme.BgCard, utilityRow, function()
+		local isOn = SoundController.ToggleMusic()
+		local mBtn = utilityRow:FindFirstChild("MusicBtn")
+		if mBtn and mBtn:IsA("TextButton") then
+			mBtn.Text = if isOn then "🎵" else "🔇"
+			mBtn.BackgroundColor3 = if isOn then Theme.BgCard else Color3.fromRGB(55, 30, 30)
+		end
+	end)
+	Theme.AddStroke(musicBtn, Theme.BgHeader, 2)
+
+	-- 4) Live Fiesta Event Status & Active Fiesta Boost Pills on the Left HUD!
+	local fiestaBanner = Theme.MakeFrame("FiestaBanner", UDim2.fromOffset(180, 32), UDim2.fromScale(0, 0), Color3.fromRGB(38, 26, 54), 10, leftStats)
+	Theme.AddStroke(fiestaBanner, Theme.AccentGold, 1.5)
+	local fiestaBannerLbl = Theme.MakeLabel("Text", "🎪 Fiesta Plaza Ready!", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, fiestaBanner)
+
+	local speedBoostPill = Theme.MakeFrame("SpeedBoostPill", UDim2.fromOffset(180, 26), UDim2.fromScale(0, 0), Color3.fromRGB(18, 48, 68), 8, leftStats)
+	speedBoostPill.Visible = false
+	Theme.AddStroke(speedBoostPill, Color3.fromRGB(80, 235, 255), 1.5)
+	local speedBoostLbl = Theme.MakeLabel("Text", "⚡ 2x Treadmill (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Color3.fromRGB(80, 235, 255), speedBoostPill)
+
+	local moneyBoostPill = Theme.MakeFrame("MoneyBoostPill", UDim2.fromOffset(180, 26), UDim2.fromScale(0, 0), Color3.fromRGB(18, 56, 32), 8, leftStats)
+	moneyBoostPill.Visible = false
+	Theme.AddStroke(moneyBoostPill, Theme.AccentGreen, 1.5)
+	local moneyBoostLbl = Theme.MakeLabel("Text", "💰 2x Pet Cash (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGreen, moneyBoostPill)
+
+	local luckBoostPill = Theme.MakeFrame("LuckBoostPill", UDim2.fromOffset(180, 26), UDim2.fromScale(0, 0), Color3.fromRGB(58, 42, 16), 8, leftStats)
+	luckBoostPill.Visible = false
+	Theme.AddStroke(luckBoostPill, Theme.AccentGold, 1.5)
+	local luckBoostLbl = Theme.MakeLabel("Text", "🍀 2x Luck & Unlock (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, luckBoostPill)
+
+	local function formatTimer(sec: number): string
+		local s = math.max(0, math.ceil(sec))
+		return string.format("%d:%02d", s // 60, s % 60)
+	end
+
+	local function refreshFiestaHud()
+		local evTitle = workspace:GetAttribute("FiestaEventTitle")
+		if typeof(evTitle) == "string" and evTitle ~= "" then
+			fiestaBannerLbl.Text = evTitle
+		end
+
+		local now = workspace:GetServerTimeNow()
+		local spdUntil = player:GetAttribute("FiestaSpeedBoostUntil")
+		if typeof(spdUntil) == "number" and spdUntil > now then
+			speedBoostPill.Visible = true
+			speedBoostLbl.Text = `⚡ 2x Treadmill ({formatTimer(spdUntil - now)})`
+		else
+			speedBoostPill.Visible = false
+		end
+
+		local monUntil = player:GetAttribute("FiestaMoneyBoostUntil")
+		if typeof(monUntil) == "number" and monUntil > now then
+			moneyBoostPill.Visible = true
+			moneyBoostLbl.Text = `💰 2x Pet Cash ({formatTimer(monUntil - now)})`
+		else
+			moneyBoostPill.Visible = false
+		end
+
+		local lckUntil = player:GetAttribute("FiestaLuckBoostUntil")
+		if typeof(lckUntil) == "number" and lckUntil > now then
+			luckBoostPill.Visible = true
+			luckBoostLbl.Text = `🍀 2x Luck & Cage ({formatTimer(lckUntil - now)})`
+		else
+			luckBoostPill.Visible = false
+		end
+	end
 
 	local function getCurrentPlayerSpeed(): number
 		local totalStatAttr = player:GetAttribute("TotalSpeedStat")
@@ -363,10 +505,6 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 
 		local now = os.clock()
 		for idx, item in trackedUnlockCages do
-			local pet = PetData.Get(item.PetId)
-			local rarity = if pet then Rarities.Get(pet.Rarity) else Rarities.Data.Common
-			local mutInfo = MutationData.Get(item.Mutation)
-
 			local row = Theme.MakeFrame(
 				item.Id,
 				UDim2.new(1, -4, 0, 46),
@@ -376,17 +514,15 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 				cagesScroll
 			)
 			row.LayoutOrder = idx
-			Theme.AddStroke(row, if mutInfo then mutInfo.Color else rarity.Color, 1.5)
+			Theme.AddStroke(row, Theme.AccentGold, 1.5)
 
-			local prefix = if mutInfo then `[{mutInfo.Name}] ` else ""
-			local display = if pet then `{pet.Emoji} {prefix}{pet.DisplayName}` else "📦 Mystery Cage"
 			local nameLbl = Theme.MakeLabel(
 				"CageName",
-				display,
+				"📦 Mystery Cage ???",
 				UDim2.new(0.58, 0, 1, 0),
 				UDim2.fromOffset(10, 0),
 				Theme.FontTitle,
-				if mutInfo then mutInfo.Color else rarity.Color,
+				Color3.fromRGB(255, 225, 95),
 				row
 			)
 			nameLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -526,13 +662,191 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 		end
 	end)
 
-	-- "📦 CLICK / TAP TO PLACE CAGE" (No E key needed — click button or click anywhere on your plot grass!)
+	-- "📦 CLICK / TAP TO PLACE CAGE" + "🗑️ DROP CAGE (G)" BUTTONS WHILE CARRYING A CAGE!
+	-- 3D VIEWPORT BOTTOM HOTBAR (Replaces plain-text CoreGui Backpack with 3D Pamalo & 3D Pet Models!)
+	task.spawn(function()
+		for _ = 1, 15 do
+			local ok = pcall(function()
+				StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+			end)
+			if ok then
+				break
+			end
+			task.wait(0.2)
+		end
+	end)
+
+	local hotbarFrame = Instance.new("Frame")
+	hotbarFrame.Name = "ViewportHotbar"
+	hotbarFrame.Size = UDim2.fromOffset(540, 66)
+	hotbarFrame.Position = UDim2.new(0.5, 0, 1, -8)
+	hotbarFrame.AnchorPoint = Vector2.new(0.5, 1)
+	hotbarFrame.BackgroundTransparency = 1
+	hotbarFrame.Parent = screenGui
+
+	local hotbarLayout = Instance.new("UIListLayout")
+	hotbarLayout.FillDirection = Enum.FillDirection.Horizontal
+	hotbarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	hotbarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	hotbarLayout.Padding = UDim.new(0, 6)
+	hotbarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	hotbarLayout.Parent = hotbarFrame
+
+	local currentHotbarTools: { Tool } = {}
+	local lastSignature = ""
+
+	local function toggleEquipTool(tool: Tool)
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if not character or not humanoid or humanoid.Health <= 0 then
+			return
+		end
+		SoundController.Play("UiClick")
+		if tool.Parent == character then
+			humanoid:UnequipTools()
+		else
+			humanoid:EquipTool(tool)
+		end
+	end
+
+	local function refreshViewportHotbar()
+		local backpack = player:FindFirstChildOfClass("Backpack")
+		local character = player.Character
+		local pamaloList: { Tool } = {}
+		local petToolList: { Tool } = {}
+
+		for _, container in { character, backpack } do
+			if container then
+				for _, child in container:GetChildren() do
+					if child:IsA("Tool") then
+						if child:GetAttribute("IsPamalo") == true then
+							table.insert(pamaloList, child)
+						elseif child:GetAttribute("IsPetTool") == true then
+							table.insert(petToolList, child)
+						end
+					end
+				end
+			end
+		end
+
+		table.sort(petToolList, function(a, b)
+			return tostring(a:GetAttribute("PetUid") or a.Name) < tostring(b:GetAttribute("PetUid") or b.Name)
+		end)
+
+		local ordered: { Tool } = {}
+		for _, t in pamaloList do
+			table.insert(ordered, t)
+		end
+		for _, t in petToolList do
+			if #ordered < 8 then
+				table.insert(ordered, t)
+			end
+		end
+
+		local sigParts = {}
+		for _, t in ordered do
+			local eq = if character and t.Parent == character then "1" else "0"
+			table.insert(sigParts, `{t.Name}:{t:GetAttribute("PetUid") or t:GetAttribute("PamaloId") or ""}:{t:GetAttribute("PetId") or ""}:{eq}`)
+		end
+		local sig = table.concat(sigParts, "|")
+		if sig == lastSignature then
+			return
+		end
+
+		for _, child in hotbarFrame:GetChildren() do
+			if child:IsA("GuiObject") then
+				child:Destroy()
+			end
+		end
+
+		for idx, tool in ordered do
+			local isEquipped = (character ~= nil and tool.Parent == character)
+			local isPamalo = tool:GetAttribute("IsPamalo") == true
+			local pamaloId = tostring(tool:GetAttribute("PamaloId") or "tsinelas_spartan")
+			local petId = tostring(tool:GetAttribute("PetId") or "chicken")
+			local mutRaw = tool:GetAttribute("Mutation")
+			local mutation: string? = if typeof(mutRaw) == "string" and mutRaw ~= "" then mutRaw else nil
+			local petInfo = if not isPamalo then PetData.Get(petId) else nil
+			local mutInfo = MutationData.Get(mutation)
+			local rarityColor = if petInfo then Rarities.Get(petInfo.Rarity).Color else Theme.AccentGold
+			local borderColor = if isEquipped
+				then Color3.fromRGB(90, 225, 255)
+				elseif mutInfo then mutInfo.Color
+				else rarityColor
+
+			local slotBtn = Instance.new("TextButton")
+			slotBtn.Name = `Slot_{idx}`
+			slotBtn.LayoutOrder = idx
+			slotBtn.Size = UDim2.fromOffset(64, 64)
+			slotBtn.BackgroundColor3 = if isEquipped then Color3.fromRGB(70, 120, 180) else Color3.fromRGB(20, 24, 32)
+			-- Steal-a-Pet style transparent/frameless 3D hotbar slots (no heavy black box background!)
+			slotBtn.BackgroundTransparency = if isEquipped then 0.65 else 0.88
+			slotBtn.BorderSizePixel = 0
+			slotBtn.Text = ""
+			Theme.AddCorner(slotBtn, 10)
+			if isEquipped then
+				Theme.AddStroke(slotBtn, borderColor, 2.5)
+			end
+			slotBtn.Parent = hotbarFrame
+
+			if isPamalo then
+				PamaloConfig.MountViewport(slotBtn, pamaloId, UDim2.fromScale(1, 0.86), UDim2.fromScale(0, 0))
+			else
+				PetVisuals.MountViewport(slotBtn, petId, mutation, UDim2.fromScale(1, 0.86), UDim2.fromScale(0, 0))
+			end
+
+			local numLbl = Theme.MakeLabel("KeyNum", tostring(idx), UDim2.fromOffset(18, 16), UDim2.fromOffset(3, 1), Theme.FontTitle, Color3.fromRGB(255, 255, 255), slotBtn)
+			numLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+			if mutInfo then
+				local mutBadge = Theme.MakeLabel("Mut", mutInfo.Name, UDim2.new(0.94, 0, 0, 13), UDim2.fromOffset(2, 1), Theme.FontTitle, mutInfo.Color, slotBtn)
+				mutBadge.TextXAlignment = Enum.TextXAlignment.Right
+			end
+
+			local shortName = if isPamalo
+				then (if PamaloConfig.Get(pamaloId) then (PamaloConfig.Get(pamaloId) :: PamaloConfig.PamaloInfo).DisplayName else tool.Name)
+				else (if petInfo then petInfo.DisplayName else tool.Name)
+			Theme.MakeLabel("Caption", shortName, UDim2.new(0.96, 0, 0, 15), UDim2.new(0.02, 0, 1, -15), Theme.FontTitle, borderColor, slotBtn)
+
+			slotBtn.Activated:Connect(function()
+				toggleEquipTool(tool)
+			end)
+		end
+
+		lastSignature = sig
+		currentHotbarTools = ordered
+	end
+
+	local KEY_MAP: { [Enum.KeyCode]: number } = {
+		[Enum.KeyCode.One] = 1,
+		[Enum.KeyCode.Two] = 2,
+		[Enum.KeyCode.Three] = 3,
+		[Enum.KeyCode.Four] = 4,
+		[Enum.KeyCode.Five] = 5,
+		[Enum.KeyCode.Six] = 6,
+		[Enum.KeyCode.Seven] = 7,
+		[Enum.KeyCode.Eight] = 8,
+	}
+
+	UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
+		if gameProcessed then
+			return
+		end
+		local slotIdx = KEY_MAP[input.KeyCode]
+		if slotIdx and currentHotbarTools[slotIdx] then
+			toggleEquipTool(currentHotbarTools[slotIdx])
+		end
+	end)
+
+	-- "📦 CLICK / TAP TO PLACE CAGE" + "🗑️ DROP CAGE (G)" BUTTONS WHILE CARRYING A CAGE!
 	local placeCageEvent = Remotes.GetEvent("PlaceCageOnPlot")
+	local dropCageEvent = Remotes.GetEvent("DropCarriedCage")
+
 	local placeCageBtn = Theme.MakeButton(
 		"PlaceCageBtn",
 		"📦 Tap / Click Plot to Place Cage",
-		UDim2.fromOffset(270, 48),
-		UDim2.new(0.5, -135, 1, -84),
+		UDim2.fromOffset(235, 42),
+		UDim2.new(0.5, -242, 1, -126),
 		Theme.AccentGreen,
 		screenGui,
 		function()
@@ -541,6 +855,29 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	)
 	placeCageBtn.Visible = false
 	Theme.AddStroke(placeCageBtn, Color3.new(1, 1, 1), 2)
+
+	local dropCageBtn = Theme.MakeButton(
+		"DropCageBtn",
+		"🗑️ Drop Cage (G)",
+		UDim2.fromOffset(165, 42),
+		UDim2.new(0.5, -82, 1, -126),
+		Theme.AccentRed,
+		screenGui,
+		function()
+			dropCageEvent:FireServer()
+		end
+	)
+	dropCageBtn.Visible = false
+	Theme.AddStroke(dropCageBtn, Color3.new(1, 1, 1), 2)
+
+	UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
+		if gameProcessed then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.G and player:GetAttribute("IsCarryingCage") == true then
+			dropCageEvent:FireServer()
+		end
+	end)
 
 	local function getOwnPlotFloor(): BasePart?
 		local plots = workspace:FindFirstChild("BasePlots")
@@ -604,7 +941,15 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 
 	RunService.Heartbeat:Connect(function()
 		refreshSpeed()
-		placeCageBtn.Visible = (player:GetAttribute("IsCarryingCage") == true) and isStandingNearOwnPlot()
+		refreshFiestaHud()
+		refreshViewportHotbar()
+		local isCarrying = player:GetAttribute("IsCarryingCage") == true
+		local nearOwnPlot = isCarrying and isStandingNearOwnPlot()
+		placeCageBtn.Visible = nearOwnPlot
+		dropCageBtn.Visible = isCarrying
+		dropCageBtn.Position = if nearOwnPlot
+			then UDim2.new(0.5, 4, 1, -126)
+			else UDim2.new(0.5, -82, 1, -126)
 
 		if chaseEdge.Visible then
 			local pulse = 0.25 + 0.55 * math.abs(math.sin(os.clock() * 5))

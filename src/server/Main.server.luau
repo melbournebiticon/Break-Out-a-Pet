@@ -26,6 +26,7 @@ local StealService = require(Services:WaitForChild("StealService"))
 local TradeService = require(Services:WaitForChild("TradeService"))
 local TutorialService = require(Services:WaitForChild("TutorialService"))
 local PamaloService = require(Services:WaitForChild("PamaloService"))
+local FiestaPlazaService = require(Services:WaitForChild("FiestaPlazaService"))
 
 Blockout.EnsureMap()
 DataService.Init()
@@ -49,5 +50,24 @@ StealService.Init()
 TradeService.Init()
 TutorialService.Init()
 PamaloService.Init()
+FiestaPlazaService.Init()
+
+-- Background Music (Replicated directly from SoundService so all players hear it reliably!)
+task.spawn(function()
+	local SoundService = game:GetService("SoundService")
+	local bgm = SoundService:FindFirstChild("MainBGM")
+	if not bgm then
+		bgm = Instance.new("Sound")
+		bgm.Name = "MainBGM"
+		bgm.SoundId = "rbxassetid://1837877624"
+		bgm.Volume = 0.45
+		bgm.Looped = true
+		bgm.RollOffMode = Enum.RollOffMode.Linear
+		bgm.Parent = SoundService
+	end
+	if bgm:IsA("Sound") and not bgm.IsPlaying then
+		bgm:Play()
+	end
+end)
 
 print("[Break Out a Pet] Server started (Full Game Steps 1-14)")

@@ -80,6 +80,15 @@ local Palettes: { [string]: SpeciesPalette } = {
 	titanic_bakunawa = { Main = Color3.fromRGB(20, 36, 78), Secondary = Color3.fromRGB(45, 95, 165), Accent = Color3.fromRGB(0, 250, 230), Category = "dragon" },
 	titanic_dragon = { Main = Color3.fromRGB(188, 26, 42), Secondary = Color3.fromRGB(245, 135, 40), Accent = Color3.fromRGB(255, 215, 55), Category = "dragon" },
 	godly_astralis = { Main = Color3.fromRGB(26, 36, 92), Secondary = Color3.fromRGB(75, 115, 215), Accent = Color3.fromRGB(165, 255, 255), Category = "dragon" },
+
+	frost_wyrm = { Main = Color3.fromRGB(125, 225, 255), Secondary = Color3.fromRGB(215, 248, 255), Accent = Color3.fromRGB(0, 185, 255), Category = "dragon" },
+	anubis_jackal = { Main = Color3.fromRGB(28, 26, 35), Secondary = Color3.fromRGB(65, 58, 78), Accent = Color3.fromRGB(255, 205, 45), Category = "dog" },
+	kraken_lord = { Main = Color3.fromRGB(22, 115, 135), Secondary = Color3.fromRGB(55, 185, 195), Accent = Color3.fromRGB(0, 255, 215), Category = "octopus" },
+	cyber_mecha_dragon = { Main = Color3.fromRGB(38, 45, 62), Secondary = Color3.fromRGB(75, 88, 115), Accent = Color3.fromRGB(0, 245, 255), Category = "dragon" },
+	cerberus_titan = { Main = Color3.fromRGB(75, 18, 22), Secondary = Color3.fromRGB(35, 15, 18), Accent = Color3.fromRGB(255, 85, 25), Category = "hydra" },
+	nebula_kitsune = { Main = Color3.fromRGB(65, 25, 115), Secondary = Color3.fromRGB(145, 65, 225), Accent = Color3.fromRGB(255, 115, 245), Category = "kitsune" },
+	chronos_pegasus = { Main = Color3.fromRGB(235, 248, 255), Secondary = Color3.fromRGB(255, 215, 85), Accent = Color3.fromRGB(95, 255, 235), Category = "unicorn" },
+	omniverse_deity = { Main = Color3.fromRGB(255, 245, 205), Secondary = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(255, 125, 245), Category = "royal_bird" },
 }
 
 local function makePart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance): Part
@@ -130,10 +139,10 @@ local function addFourLegs(model: Model, centerCF: CFrame, xSpread: number, zFro
 	end
 end
 
-function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: CFrame): Model
+function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: CFrame, scaleOverride: number?): Model
 	local info = PetData.Get(petId)
 	local mutInfo = MutationData.Get(mutation)
-	local isSizeMutation = mutInfo ~= nil and mutInfo.ScaleMultiplier ~= nil
+	local isSizeMutation = mutInfo ~= nil and (mutInfo.ScaleMultiplier ~= nil or (mutInfo.MinScale ~= nil and mutInfo.MinScale >= 3.0))
 
 	-- 1) Check if the developer placed a custom 3D model in ReplicatedStorage.PetModels.<petId>
 	local customFolder = ReplicatedStorage:FindFirstChild("PetModels")
@@ -159,8 +168,9 @@ function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: C
 			end
 		end
 		local baseScale = if info and typeof(info.Scale) == "number" and info.Scale > 0 then info.Scale else 1
-		local mutScale = if mutInfo and typeof(mutInfo.ScaleMultiplier) == "number" then mutInfo.ScaleMultiplier else 1
-		local scale = math.min(11.5, baseScale * mutScale)
+		local scale = if typeof(scaleOverride) == "number" and scaleOverride > 0
+			then scaleOverride
+			else MutationData.GetScale(mutation, baseScale)
 		if math.abs(scale - 1) > 0.01 then
 			local pivotPos = centerCFrame.Position
 			for _, desc in cloned:GetDescendants() do
@@ -497,10 +507,11 @@ function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: C
 		end
 	end
 
-	-- Apply Semi-Titanic (4.5x) or Titanic (9.0x..11.0x) scale around centerCFrame!
+	-- Apply dynamic Scale (Normal: 1-2.9x, Semi: 3-3.9x, Huge: 4-4.9x, Titanic: 7-9.5x, Godly: 11-12.5x)!
 	local baseScale = if info and typeof(info.Scale) == "number" and info.Scale > 0 then info.Scale else 1
-	local mutScale = if mutInfo and typeof(mutInfo.ScaleMultiplier) == "number" then mutInfo.ScaleMultiplier else 1
-	local scale = math.min(11.5, baseScale * mutScale)
+	local scale = if typeof(scaleOverride) == "number" and scaleOverride > 0
+		then scaleOverride
+		else MutationData.GetScale(mutation, baseScale)
 	if math.abs(scale - 1) > 0.01 then
 		local pivotPos = centerCFrame.Position
 		for _, desc in model:GetDescendants() do
@@ -515,6 +526,47 @@ function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: C
 	end
 
 	return model
+end
+
+-- Creates a 3D ViewportFrame icon rendering the pet model at a 3/4 camera angle (for the bottom toolbar & drawers!)
+function PetVisuals.MountViewport(parent: GuiObject, petId: string, mutation: string?, size: UDim2, position: UDim2): ViewportFrame
+	local vp = Instance.new("ViewportFrame")
+	vp.Name = "PetViewport"
+	vp.Size = size
+	vp.Position = position
+	vp.BackgroundTransparency = 1
+	vp.LightColor = Color3.fromRGB(255, 252, 245)
+	vp.LightDirection = Vector3.new(-1, -1.2, -1)
+	vp.Ambient = Color3.fromRGB(185, 195, 215)
+	vp.Parent = parent
+
+	local cam = Instance.new("Camera")
+	cam.FieldOfView = 45
+	cam.CFrame = CFrame.lookAt(Vector3.new(3.15, 2.35, -3.75), Vector3.new(0, 0.15, 0))
+	cam.Parent = vp
+	vp.CurrentCamera = cam
+
+	local worldModel = Instance.new("WorldModel")
+	worldModel.Parent = vp
+
+	local model = PetVisuals.BuildModel(petId, mutation, CFrame.new())
+	-- Normalize scale inside the icon viewport so Titanic & normal pets both fit the frame cleanly
+	local scaleAttr = model:GetAttribute("PetScale")
+	local petScale = if typeof(scaleAttr) == "number" and scaleAttr > 0 then scaleAttr else 1
+	if math.abs(petScale - 1) > 0.01 then
+		local inv = 1 / petScale
+		for _, desc in model:GetDescendants() do
+			if desc:IsA("BasePart") then
+				desc.Size *= inv
+				local rel = desc.CFrame.Position
+				local rot = desc.CFrame - rel
+				desc.CFrame = CFrame.new(rel * inv) * rot
+			end
+		end
+	end
+	model.Parent = worldModel
+
+	return vp
 end
 
 return PetVisuals

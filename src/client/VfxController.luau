@@ -149,9 +149,9 @@ function VfxController.ShakeCamera(duration: number, intensity: number)
 end
 
 local function pickNewWanderTarget(state: PetWanderState): Vector3
-	-- Roam freely across the entire huge 72x72 open grass yard of the plot!
-	local rx = (rng:NextNumber() * 2 - 1) * 30.0
-	local rz = (rng:NextNumber() * 2 - 1) * 28.0
+	-- Keep wandering pets comfortably inside the fenced plot yard (shifted slightly toward the back so Titanic pets don't overhang the front treadmill!)
+	local rx = (rng:NextNumber() * 2 - 1) * 21.0
+	local rz = -14.0 + rng:NextNumber() * 36.0
 	return Vector3.new(state.PlotCenter.X + rx, state.HomePos.Y, state.PlotCenter.Z + rz)
 end
 

@@ -145,6 +145,77 @@ local Zones: { [string]: { [string]: number } } = {
 		godly_bathala = 4,
 		godly_astralis = 2,
 	},
+	-- Zone 13: Frostbite Glacier Keep (Total = 100)
+	Zone13 = {
+		semi_hydra = 20,
+		semi_golem = 20,
+		titanic_kalabaw = 18,
+		titanic_agila = 16,
+		frost_wyrm = 18,
+		titanic_bakunawa = 8,
+	},
+	-- Zone 14: Pharaoh Golden Pyramid (Total = 100)
+	Zone14 = {
+		semi_golem = 16,
+		titanic_kalabaw = 18,
+		titanic_agila = 18,
+		frost_wyrm = 20,
+		anubis_jackal = 18,
+		titanic_dragon = 10,
+	},
+	-- Zone 15: Atlantis Abyssal Trench (Total = 100)
+	Zone15 = {
+		frost_wyrm = 22,
+		anubis_jackal = 22,
+		titanic_bakunawa = 20,
+		titanic_dragon = 16,
+		kraken_lord = 14,
+		titanic_sarimanok = 6,
+	},
+	-- Zone 16: Cyber Neon Metropolis (Total = 100)
+	Zone16 = {
+		anubis_jackal = 22,
+		titanic_dragon = 20,
+		kraken_lord = 22,
+		titanic_sarimanok = 16,
+		cyber_mecha_dragon = 14,
+		godly_bathala = 6,
+	},
+	-- Zone 17: Underworld Hades Core (Total = 100)
+	Zone17 = {
+		kraken_lord = 24,
+		titanic_sarimanok = 20,
+		cyber_mecha_dragon = 22,
+		cerberus_titan = 18,
+		godly_bathala = 10,
+		godly_astralis = 6,
+	},
+	-- Zone 18: Astral Nebula Dimension (Total = 100)
+	Zone18 = {
+		cyber_mecha_dragon = 24,
+		cerberus_titan = 24,
+		godly_bathala = 18,
+		godly_astralis = 16,
+		nebula_kitsune = 14,
+		chronos_pegasus = 4,
+	},
+	-- Zone 19: Chronos Time Citadel (Total = 100)
+	Zone19 = {
+		cerberus_titan = 22,
+		godly_bathala = 20,
+		godly_astralis = 20,
+		nebula_kitsune = 22,
+		chronos_pegasus = 12,
+		omniverse_deity = 4,
+	},
+	-- Zone 20: Omniverse Godly Sanctuary (Total = 100)
+	Zone20 = {
+		godly_bathala = 20,
+		godly_astralis = 22,
+		nebula_kitsune = 24,
+		chronos_pegasus = 20,
+		omniverse_deity = 14,
+	},
 }
 
 for zoneName, table_ in Zones do

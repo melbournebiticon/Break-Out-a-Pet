@@ -15,6 +15,7 @@ local ShopPanel = require(UI:WaitForChild("ShopPanel"))
 local FusionPanel = require(UI:WaitForChild("FusionPanel"))
 local DailyPanel = require(UI:WaitForChild("DailyPanel"))
 local TradePanel = require(UI:WaitForChild("TradePanel"))
+local SellPetPanel = require(UI:WaitForChild("SellPetPanel"))
 local AbilityButton = require(UI:WaitForChild("AbilityButton"))
 local TutorialGuide = require(UI:WaitForChild("TutorialGuide"))
 
@@ -38,6 +39,7 @@ local panels: { [string]: { SetVisible: (boolean) -> (), IsVisible: () -> boolea
 	Fusion = FusionPanel,
 	Daily = DailyPanel,
 	Trade = TradePanel,
+	SellPet = SellPetPanel,
 }
 
 local function closeAllPanels()
@@ -77,6 +79,9 @@ end)
 DailyPanel.Init(screenGui, closeAllPanels)
 TradePanel.Init(screenGui, closeAllPanels, function()
 	openPanel("Trade")
+end)
+SellPetPanel.Init(screenGui, closeAllPanels, function()
+	openPanel("SellPet")
 end)
 AbilityButton.Init(screenGui)
 TutorialGuide.Init(screenGui)

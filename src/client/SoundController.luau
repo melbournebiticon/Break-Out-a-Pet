@@ -1,7 +1,8 @@
 --!strict
 -- SoundController.luau (CLIENT)
 -- Plays game SFX, loops the chase alarm continuously while BeingChased is true,
--- and plays a triumphant success sound the moment the player enters the Safe Zone with a cage!
+-- plays a triumphant success sound when entering the Safe Zone,
+-- and controls the global Background Music (MainBGM in SoundService).
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -13,9 +14,17 @@ local SoundData = require(Shared:WaitForChild("SoundData"))
 
 local SoundController = {}
 
-local soundGroup: SoundGroup
 local sounds: { [string]: Sound } = {}
 local chaseLoopRunning = false
+local isMuted = false
+
+local function getBgmSound(): Sound?
+	local bgm = SoundService:WaitForChild("MainBGM", 6)
+	if bgm and bgm:IsA("Sound") then
+		return bgm
+	end
+	return nil
+end
 
 local function getOrCreateSound(name: string): Sound?
 	local entry = SoundData[name]
@@ -29,8 +38,7 @@ local function getOrCreateSound(name: string): Sound?
 		snd.SoundId = entry.Id
 		snd.PlaybackSpeed = entry.Pitch
 		snd.Volume = entry.Volume
-		snd.SoundGroup = soundGroup
-		snd.Parent = soundGroup
+		snd.Parent = SoundService
 		sounds[name] = snd
 	end
 	return snd
@@ -48,6 +56,22 @@ function SoundController.Stop(name: string)
 	if snd and snd.IsPlaying then
 		snd:Stop()
 	end
+end
+
+function SoundController.ToggleMusic(): boolean
+	isMuted = not isMuted
+	local bgm = getBgmSound()
+	if bgm then
+		bgm.Volume = if isMuted then 0 else 0.45
+		if not isMuted and not bgm.IsPlaying then
+			bgm:Play()
+		end
+	end
+	return not isMuted
+end
+
+function SoundController.IsMusicOn(): boolean
+	return not isMuted
 end
 
 local function updateChaseLoop(localPlayer: Player)
@@ -74,11 +98,6 @@ local function updateChaseLoop(localPlayer: Player)
 end
 
 function SoundController.Init()
-	soundGroup = Instance.new("SoundGroup")
-	soundGroup.Name = "GameSfx"
-	soundGroup.Volume = 0.85
-	soundGroup.Parent = SoundService
-
 	ProximityPromptService.PromptButtonHoldBegan:Connect(function()
 		SoundController.Play("CageOpen")
 	end)
@@ -96,6 +115,14 @@ function SoundController.Init()
 		updateChaseLoop(localPlayer)
 		if localPlayer:GetAttribute("CageSecured") == true then
 			SoundController.Play("SafeZoneSuccess")
+		end
+	end)
+
+	-- Ensure BGM is playing on client join
+	task.spawn(function()
+		local bgm = getBgmSound()
+		if bgm and not bgm.IsPlaying then
+			bgm:Play()
 		end
 	end)
 end

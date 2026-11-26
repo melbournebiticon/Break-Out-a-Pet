@@ -10,6 +10,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local PetData = require(Shared:WaitForChild("PetData"))
+local PetVisuals = require(Shared:WaitForChild("PetVisuals"))
 local Rarities = require(Shared:WaitForChild("Rarities"))
 local MutationData = require(Shared:WaitForChild("MutationData"))
 local ShopData = require(Shared:WaitForChild("ShopData"))
@@ -223,7 +224,7 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 
 			local row = Theme.MakeFrame(
 				item.Uid,
-				UDim2.new(1, -4, 0, 44),
+				UDim2.new(1, -4, 0, 48),
 				UDim2.fromScale(0, 0),
 				if isActive then Color3.fromRGB(42, 48, 62) else Color3.fromRGB(34, 36, 46),
 				8,
@@ -232,28 +233,49 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 			row.LayoutOrder = order
 			Theme.AddStroke(row, if mutInfo then mutInfo.Color else rarity.Color, 1.5)
 
+			-- 3D Pet Viewport Icon on the left of the row (no dark box background)!
+			local iconBg = Instance.new("Frame")
+			iconBg.Name = "IconBg"
+			iconBg.Size = UDim2.fromOffset(42, 42)
+			iconBg.Position = UDim2.fromOffset(3, 3)
+			iconBg.BackgroundTransparency = 1
+			iconBg.BorderSizePixel = 0
+			iconBg.Parent = row
+			PetVisuals.MountViewport(iconBg, item.PetId, item.Mutation, UDim2.fromScale(1, 1), UDim2.fromScale(0, 0))
+
 			local prefix = if mutInfo then `[{mutInfo.Name}] ` else ""
 			local nameLbl = Theme.MakeLabel(
 				"Name",
-				`{info.Emoji} {prefix}{info.DisplayName}`,
-				UDim2.new(0.54, 0, 0, 22),
-				UDim2.fromOffset(8, 2),
+				`{prefix}{info.DisplayName}`,
+				UDim2.new(0.44, 0, 0, 20),
+				UDim2.fromOffset(48, 3),
 				Theme.FontTitle,
 				if mutInfo then mutInfo.Color else rarity.Color,
 				row
 			)
 			nameLbl.TextXAlignment = Enum.TextXAlignment.Left
 
-			local rateText = if income > 0
+			local skillTag = ""
+			if info.Ability then
+				local isPass = (info.Ability.Duration <= 0 and info.Ability.Cooldown <= 0) or info.Ability.AbilityId == "revive"
+				local modeTag = if isPass then "[Passive]" else "[Active Q]"
+				skillTag = `⚡ {modeTag} {info.Ability.Description}`
+			end
+
+			local rateText = if item.Equipped and info.Ability
+				then skillTag
+				elseif income > 0 and info.Ability
+				then `+{NumberFormat.Short(income)}/s • {skillTag}`
+				elseif income > 0
 				then `+{NumberFormat.Short(income)}/s`
-				else (if info.Ability then `⚡ {info.Ability.AbilityId}` else "Power")
+				else (if skillTag ~= "" then skillTag else "Power")
 			local rateLbl = Theme.MakeLabel(
 				"Rate",
 				rateText,
-				UDim2.new(0.54, 0, 0, 18),
-				UDim2.fromOffset(8, 23),
+				UDim2.new(0.46, 0, 0, 22),
+				UDim2.fromOffset(48, 23),
 				Theme.FontBody,
-				Theme.AccentGreen,
+				if item.Equipped then Color3.fromRGB(195, 145, 255) elseif income > 0 then Theme.AccentGreen else Color3.fromRGB(195, 145, 255),
 				row
 			)
 			rateLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -279,13 +301,13 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 				local canPlace = info.Type == "Money" or info.Type == "Hybrid"
 				local btnX = -6
 
-				local sellVal = ShopData.GetSellValue(item.PetId)
+				local sellVal = ShopData.GetSellValue(item.PetId, item.Mutation)
 				local confirming = (sellConfirmUid == item.Uid)
 				Theme.MakeButton(
 					"SellBtn",
-					if confirming then "Sure?" else "Sell",
-					UDim2.fromOffset(44, 28),
-					UDim2.new(1, btnX - 44, 0.5, -14),
+					if confirming then `$${NumberFormat.Short(sellVal)}?` else "Sell",
+					UDim2.fromOffset(46, 28),
+					UDim2.new(1, btnX - 46, 0.5, -14),
 					Theme.AccentRed,
 					row,
 					function()
@@ -306,7 +328,7 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 						end
 					end
 				)
-				btnX -= 48
+				btnX -= 50
 
 				if canPlace then
 					Theme.MakeButton(
@@ -329,9 +351,9 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 				if hasAbility then
 					Theme.MakeButton(
 						"EquipBtn",
-						"⚡",
-						UDim2.fromOffset(30, 28),
-						UDim2.new(1, btnX - 30, 0.5, -14),
+						"⚡Skill",
+						UDim2.fromOffset(46, 28),
+						UDim2.new(1, btnX - 46, 0.5, -14),
 						Theme.AccentPurple,
 						row,
 						function()
@@ -339,7 +361,8 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 							if typeof(res) == "table" then
 								if res.Ok then
 									SoundController.Play("Purchase")
-									Toasts.Show(`⚡ Equipped {info.DisplayName} skill!`, Theme.AccentPurple)
+									local desc = if info.Ability then info.Ability.Description else "Skill active!"
+									Toasts.Show(`⚡ Equipped {info.DisplayName}: {desc}`, Theme.AccentPurple)
 								else
 									Toasts.Show(tostring(res.Message), Theme.AccentRed)
 								end

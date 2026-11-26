@@ -231,4 +231,36 @@ function PamaloConfig.BuildToolParts(toolId: string, baseCF: CFrame, parent: Ins
 	return handle
 end
 
+function PamaloConfig.MountViewport(parent: GuiObject, toolId: string, size: UDim2, position: UDim2): ViewportFrame
+	local vp = Instance.new("ViewportFrame")
+	vp.Name = "PamaloViewport"
+	vp.Size = size
+	vp.Position = position
+	vp.BackgroundTransparency = 1
+	vp.LightColor = Color3.fromRGB(255, 252, 245)
+	vp.LightDirection = Vector3.new(-1, -1, -1)
+	vp.Ambient = Color3.fromRGB(190, 200, 220)
+	vp.Parent = parent
+
+	local cam = Instance.new("Camera")
+	cam.FieldOfView = 42
+	cam.CFrame = CFrame.lookAt(Vector3.new(2.2, 1.8, -2.8), Vector3.new(0, 0.45, 0))
+	cam.Parent = vp
+	vp.CurrentCamera = cam
+
+	local worldModel = Instance.new("WorldModel")
+	worldModel.Parent = vp
+
+	local model = Instance.new("Model")
+	model.Parent = worldModel
+	PamaloConfig.BuildToolParts(
+		toolId,
+		CFrame.Angles(math.rad(15), math.rad(25), math.rad(-28)),
+		model,
+		true
+	)
+
+	return vp
+end
+
 return PamaloConfig

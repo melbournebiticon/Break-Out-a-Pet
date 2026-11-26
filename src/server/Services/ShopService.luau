@@ -68,12 +68,35 @@ function ShopService.HandleRequest(player: Player, action: any, arg: any): ShopR
 		if owned.InTransit then
 			return { Ok = false, Message = "Cannot sell a pet right now." }
 		end
-		local value = ShopData.GetSellValue(owned.PetId)
+		local value = ShopData.GetSellValue(owned.PetId, owned.Mutation)
 		if not InventoryService.RemovePet(player, arg) then
 			return { Ok = false, Message = "Could not remove pet." }
 		end
 		EconomyService.AddMoney(player, value)
-		return { Ok = true, Message = `Sold for ${NumberFormat.Short(value)}!` }
+		return { Ok = true, Message = `💰 Sold for $${NumberFormat.Short(value)}!` }
+	elseif action == "SellPetsBatch" then
+		if typeof(arg) ~= "table" then
+			return { Ok = false, Message = "Select at least 1 pet to sell!" }
+		end
+		local totalEarned = 0
+		local soldCount = 0
+		for _, uid in arg do
+			if typeof(uid) == "string" and uid ~= "" then
+				local owned = InventoryService.GetPetByUid(player, uid)
+				if owned and not owned.InTransit and owned.State ~= "Placed" and not owned.Equipped then
+					local value = ShopData.GetSellValue(owned.PetId, owned.Mutation)
+					if InventoryService.RemovePet(player, uid) then
+						totalEarned += value
+						soldCount += 1
+					end
+				end
+			end
+		end
+		if soldCount == 0 then
+			return { Ok = false, Message = "No unused pets were selected to sell." }
+		end
+		EconomyService.AddMoney(player, totalEarned)
+		return { Ok = true, Message = `💰 Sold {soldCount} pet(s) for $${NumberFormat.Short(totalEarned)}!` }
 	end
 
 	return { Ok = false, Message = "Unknown shop action." }

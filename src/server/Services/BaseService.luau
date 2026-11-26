@@ -21,20 +21,12 @@ local BaseService = {}
 local PetModelRenderedEvent = Instance.new("BindableEvent")
 BaseService.PetModelRendered = PetModelRenderedEvent.Event
 
-local SPAWN_OFFSETS: { Vector3 } = {
-	Vector3.new(-12, 2.1, -8),
-	Vector3.new(0, 2.1, -8),
-	Vector3.new(12, 2.1, -8),
-	Vector3.new(-12, 2.1, 0),
-	Vector3.new(0, 2.1, 0),
-	Vector3.new(12, 2.1, 0),
-	Vector3.new(-12, 2.1, 8),
-	Vector3.new(0, 2.1, 8),
-	Vector3.new(12, 2.1, 8),
-	Vector3.new(-10, 2.1, 14),
-	Vector3.new(0, 2.1, 14),
-	Vector3.new(10, 2.1, 14),
-}
+local SPAWN_OFFSETS: { Vector3 } = {}
+for row = -2, 2 do
+	for col = -2, 2 do
+		table.insert(SPAWN_OFFSETS, Vector3.new(col * 9.5, 2.1, row * 8.5 + 2.0))
+	end
+end
 
 local function getPetsFolder(plot: Model): Folder
 	local existing = plot:FindFirstChild("Pets")
@@ -57,12 +49,15 @@ local function buildPetModel(owned: InventoryService.OwnedPet, spawnPos: Vector3
 	local mutMult = MutationData.GetMultiplier(owned.Mutation)
 	local income = info.IncomePerSec * mutMult
 
+	local petScaleOverride = if typeof(owned.Scale) == "number" and owned.Scale > 0
+		then owned.Scale
+		else MutationData.GetScale(owned.Mutation, info.Scale)
 	local centerCF = CFrame.new(spawnPos)
-	local model = PetVisuals.BuildModel(owned.PetId, owned.Mutation, centerCF)
+	local model = PetVisuals.BuildModel(owned.PetId, owned.Mutation, centerCF, petScaleOverride)
 	local petScaleAttr = model:GetAttribute("PetScale")
-	local petScale = if typeof(petScaleAttr) == "number" and petScaleAttr > 0 then petScaleAttr else 1
+	local petScale = if typeof(petScaleAttr) == "number" and petScaleAttr > 0 then petScaleAttr else petScaleOverride
 	if petScale > 1 then
-		-- Lift scaled Semi-Titanic / Titanic pets so their feet/belly rest cleanly on top of the grass floor!
+		-- Lift scaled Semi / Huge / Titanic / Godly pets so their feet/belly rest cleanly on top of the grass floor!
 		model:PivotTo(CFrame.new(spawnPos + Vector3.new(0, 1.1 * (petScale - 1), 0)))
 	end
 

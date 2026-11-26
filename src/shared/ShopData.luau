@@ -7,59 +7,70 @@
 
 local Config = require(script.Parent.Config)
 local PetData = require(script.Parent.PetData)
+local MutationData = require(script.Parent.MutationData)
 
 local ShopData = {
 	Speed = {
-		MaxLevel = 20,
+		MaxLevel = 25,
 		SpeedPerLevel = 0.8, -- kept for backward compatibility
-		BaseGainPerSec = 15, -- +15 Speed/sec at Tier 0
-		GainPerLevel = 50,
-		BasePrice = 350,
-		PriceGrowth = 4.2,
+		BaseGainPerSec = 2, -- Tier 0 = +2/s; doubles every level (Tier 6 = +100, Tier 7 = +200, Tier 8 = +400!)
+		GainPerLevel = 10,
+		BasePrice = 250,
+		PriceGrowth = 3.2,
 		TierGains = {
-			[0] = 15,
-			[1] = 45,
-			[2] = 150,
-			[3] = 520,
-			[4] = 1800,
-			[5] = 6500,
-			[6] = 24000,
-			[7] = 90000,
-			[8] = 350000,
-			[9] = 1400000,
-			[10] = 5500000,
-			[11] = 18000000,
-			[12] = 55000000,
-			[13] = 160000000,
-			[14] = 450000000,
-			[15] = 1200000000,
-			[16] = 3200000000,
-			[17] = 8500000000,
-			[18] = 22000000000,
-			[19] = 55000000000,
-			[20] = 150000000000,
+			[0] = 2,
+			[1] = 4,
+			[2] = 8,
+			[3] = 15,
+			[4] = 30,
+			[5] = 50,
+			[6] = 100, -- Level 6 = +100 Speed/sec!
+			[7] = 200, -- Level 7 = +200 Speed/sec!
+			[8] = 400, -- Level 8 = +400 Speed/sec!
+			[9] = 800,
+			[10] = 1600,
+			[11] = 3200,
+			[12] = 6400,
+			[13] = 12800,
+			[14] = 25600,
+			[15] = 51200,
+			[16] = 102400,
+			[17] = 204800,
+			[18] = 409600,
+			[19] = 819200,
+			[20] = 1638400,
+			[21] = 3276800,
+			[22] = 6553600,
+			[23] = 13107200,
+			[24] = 26214400,
+			[25] = 52428800,
 		},
 		TierPrices = {
-			[0] = 350,
-			[1] = 1800,
-			[2] = 8500,
-			[3] = 40000,
-			[4] = 180000,
-			[5] = 800000,
-			[6] = 3500000,
-			[7] = 16000000,
-			[8] = 75000000,
-			[9] = 350000000,
-			[10] = 1500000000,
-			[11] = 6500000000,
-			[12] = 28000000000,
-			[13] = 120000000000,
-			[14] = 500000000000,
-			[15] = 2200000000000,
-			[16] = 9500000000000,
-			[17] = 40000000000000,
-			[18] = 180000000000000,
-			[19] = 750000000000000,
+			[0] = 250,
+			[1] = 900,
+			[2] = 3200,
+			[3] = 11000,
+			[4] = 38000,
+			[5] = 130000,
+			[6] = 450000,
+			[7] = 1500000,
+			[8] = 5000000,
+			[9] = 16000000,
+			[10] = 55000000,
+			[11] = 180000000,
+			[12] = 600000000,
+			[13] = 2000000000,
+			[14] = 6500000000,
+			[15] = 22000000000,
+			[16] = 75000000000,
+			[17] = 250000000000,
+			[18] = 850000000000,
+			[19] = 2800000000000,
+			[20] = 9500000000000,
+			[21] = 32000000000000,
+			[22] = 110000000000000,
+			[23] = 380000000000000,
+			[24] = 1300000000000000,
 		},
 	},
 	TreadmillTiers = {
@@ -273,9 +284,82 @@ local ShopData = {
 			AccentColor = Color3.fromRGB(255, 235, 120),
 			RunSpeed = 88,
 		},
+		[21] = {
+			Name = "Nebula Star Strider",
+			PlatformColor = Color3.fromRGB(48, 22, 85),
+			PlatformMat = Enum.Material.Neon,
+			BeltColor = Color3.fromRGB(14, 10, 28),
+			RailColor = Color3.fromRGB(235, 110, 255),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(245, 130, 255),
+			RunSpeed = 90,
+		},
+		[22] = {
+			Name = "Supernova Overdrive",
+			PlatformColor = Color3.fromRGB(215, 75, 25),
+			PlatformMat = Enum.Material.Neon,
+			BeltColor = Color3.fromRGB(26, 12, 10),
+			RailColor = Color3.fromRGB(255, 215, 55),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 185, 45),
+			RunSpeed = 92,
+		},
+		[23] = {
+			Name = "Chronos Time Runner",
+			PlatformColor = Color3.fromRGB(25, 85, 95),
+			PlatformMat = Enum.Material.ForceField,
+			BeltColor = Color3.fromRGB(10, 24, 28),
+			RailColor = Color3.fromRGB(95, 255, 225),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(110, 255, 230),
+			RunSpeed = 94,
+		},
+		[24] = {
+			Name = "Multiverse Infinity Belt",
+			PlatformColor = Color3.fromRGB(85, 18, 115),
+			PlatformMat = Enum.Material.ForceField,
+			BeltColor = Color3.fromRGB(18, 8, 28),
+			RailColor = Color3.fromRGB(255, 95, 215),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(255, 120, 235),
+			RunSpeed = 96,
+		},
+		[25] = {
+			Name = "Omniverse Supreme Core",
+			PlatformColor = Color3.fromRGB(255, 245, 195),
+			PlatformMat = Enum.Material.Neon,
+			BeltColor = Color3.fromRGB(15, 15, 25),
+			RailColor = Color3.fromRGB(145, 255, 255),
+			RailMat = Enum.Material.Neon,
+			AccentColor = Color3.fromRGB(145, 255, 255),
+			RunSpeed = 100,
+		},
 	},
 	PetSlots = {
-		Prices = { 2500, 15000, 75000, 350000, 1500000, 6000000, 25000000, 100000000, 400000000 },
+		Prices = {
+			2500,
+			12000,
+			50000,
+			200000,
+			800000,
+			3000000,
+			12000000,
+			45000000,
+			175000000,
+			650000000,
+			2500000000,
+			9500000000,
+			35000000000,
+			130000000000,
+			500000000000,
+			1800000000000,
+			6500000000000,
+			24000000000000,
+			90000000000000,
+			350000000000000,
+			1200000000000000,
+			4500000000000000,
+		},
 	},
 	SellMultiplier = 0.5,
 }
@@ -291,7 +375,7 @@ function ShopData.StatToPhysicalWalkSpeed(speedStat: number): number
 		return 16
 	end
 	local ratio = math.max(1, speedStat / 16)
-	return math.clamp(16 + math.log10(ratio) * 6.5, 16, 82)
+	return math.clamp(16 + math.log10(ratio) * 7.6, 16, 86)
 end
 
 function ShopData.GetTrainerGainPerSec(trainerLevel: number): number
@@ -315,12 +399,13 @@ function ShopData.GetSlotPrice(currentSlots: number): number?
 	return ShopData.PetSlots.Prices[index]
 end
 
-function ShopData.GetSellValue(petId: string): number
+function ShopData.GetSellValue(petId: string, mutation: string?): number
 	local pet = PetData.Get(petId)
 	if not pet then
 		return 0
 	end
-	return math.floor(pet.CagePrice * ShopData.SellMultiplier)
+	local mult = MutationData.GetMultiplier(mutation)
+	return math.floor(pet.CagePrice * ShopData.SellMultiplier * mult)
 end
 
 return ShopData

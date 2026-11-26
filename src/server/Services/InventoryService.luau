@@ -125,7 +125,11 @@ local function syncBackpackPetTools(player: Player, pets: { OwnedPet })
 	end
 
 	for uid, owned in desiredByUid do
-		if not existingByUid[uid] then
+		local existingTool = existingByUid[uid]
+		if existingTool then
+			existingTool:SetAttribute("PetId", owned.PetId)
+			existingTool:SetAttribute("Mutation", owned.Mutation or "")
+		else
 			local info = PetData.Get(owned.PetId)
 			if info then
 				local tool = Instance.new("Tool")
@@ -135,6 +139,8 @@ local function syncBackpackPetTools(player: Player, pets: { OwnedPet })
 				tool.CanBeDropped = false
 				tool:SetAttribute("IsPetTool", true)
 				tool:SetAttribute("PetUid", owned.Uid)
+				tool:SetAttribute("PetId", owned.PetId)
+				tool:SetAttribute("Mutation", owned.Mutation or "")
 
 				local handle = Instance.new("Part")
 				handle.Name = "Handle"
@@ -146,11 +152,14 @@ local function syncBackpackPetTools(player: Player, pets: { OwnedPet })
 				handle.Massless = true
 				handle.Parent = tool
 
-				local visual = PetVisuals.BuildModel(owned.PetId, owned.Mutation, handle.CFrame * CFrame.new(0, 0.4, 0))
+				local petScaleOverride = if typeof(owned.Scale) == "number" and owned.Scale > 0
+					then owned.Scale
+					else MutationData.GetScale(owned.Mutation, info.Scale)
+				local visual = PetVisuals.BuildModel(owned.PetId, owned.Mutation, handle.CFrame * CFrame.new(0, 0.4, 0), petScaleOverride)
 				local petScaleAttr = visual:GetAttribute("PetScale")
 				local petScale = if typeof(petScaleAttr) == "number" and petScaleAttr > 0
 					then petScaleAttr
-					else (if typeof(info.Scale) == "number" and info.Scale > 0 then info.Scale else 1)
+					else petScaleOverride
 				-- If Semi-Titanic or Titanic (petScale > 1), keep the EXACT same full size in hand as on the plot (1:1)!
 				local toolScaleFactor = if petScale > 1 then 1.0 else 0.45
 				local pivotPos = handle.Position
@@ -349,6 +358,7 @@ function InventoryService.AddPet(player: Player, petId: string, mutation: string
 	if mutation and MutationData.Get(mutation) ~= nil then
 		validMutation = mutation
 	end
+	local rolledScale = MutationData.RollScale(validMutation, info.Scale)
 
 	local owned: OwnedPet = {
 		Uid = HttpService:GenerateGUID(false),
@@ -357,6 +367,7 @@ function InventoryService.AddPet(player: Player, petId: string, mutation: string
 		SlotIndex = nil,
 		Equipped = false,
 		Mutation = validMutation,
+		Scale = rolledScale,
 		InTransit = false,
 	}
 
@@ -393,6 +404,7 @@ function InventoryService.AddPetToBag(player: Player, petId: string, mutation: s
 	if mutation and MutationData.Get(mutation) ~= nil then
 		validMutation = mutation
 	end
+	local rolledScale = MutationData.RollScale(validMutation, info.Scale)
 
 	local owned: OwnedPet = {
 		Uid = HttpService:GenerateGUID(false),
@@ -401,6 +413,7 @@ function InventoryService.AddPetToBag(player: Player, petId: string, mutation: s
 		SlotIndex = nil,
 		Equipped = false,
 		Mutation = validMutation,
+		Scale = rolledScale,
 		InTransit = false,
 	}
 

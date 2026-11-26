@@ -340,6 +340,10 @@ function StatsService.Init()
 				if DataService.IsLoaded(player) and isStandingOnOwnTreadmill(player) then
 					local tier = StatsService.GetSpeedLevel(player)
 					local gain = ShopData.GetTrainerGainPerSec(tier)
+					local boostUntil = player:GetAttribute("FiestaSpeedBoostUntil")
+					if typeof(boostUntil) == "number" and boostUntil > workspace:GetServerTimeNow() then
+						gain *= 2
+					end
 					StatsService.AddTrainedSpeed(player, gain)
 					treadmillTickEvent:FireClient(player, gain)
 				end
