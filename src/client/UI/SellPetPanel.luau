@@ -46,12 +46,17 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 	local shopFn = Remotes.GetFunction("ShopRequest")
 
 	local modal, content = Theme.MakeModalShell(screenGui, "💰 BENTAHAN NG PET (UNUSED PETS)", onClose)
+	modal.Size = UDim2.fromScale(0.78, 0.78)
+	local sc = modal:FindFirstChildOfClass("UISizeConstraint")
+	if sc then
+		sc.MaxSize = Vector2.new(740, 460)
+	end
 	modalFrame = modal
 
 	local infoLabel = Theme.MakeLabel(
 		"Info",
 		"Click the unused pets you want to sell, then press SELL SELECTED!",
-		UDim2.new(1, -140, 0, 28),
+		UDim2.new(1, -124, 0, 22),
 		UDim2.fromOffset(0, 0),
 		Theme.FontBody,
 		Theme.TextPrimary,
@@ -62,8 +67,8 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 	local selectAllBtn = Theme.MakeButton(
 		"SelectAllBtn",
 		"☑️ Select All",
-		UDim2.fromOffset(130, 28),
-		UDim2.new(1, -130, 0, 0),
+		UDim2.fromOffset(118, 24),
+		UDim2.new(1, -118, 0, 0),
 		Theme.AccentBlue,
 		content,
 		function()
@@ -93,8 +98,8 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Name = "Grid"
-	scroll.Size = UDim2.new(1, 0, 1, -96)
-	scroll.Position = UDim2.fromOffset(0, 34)
+	scroll.Size = UDim2.new(1, 0, 1, -72)
+	scroll.Position = UDim2.fromOffset(0, 26)
 	scroll.BackgroundTransparency = 1
 	scroll.BorderSizePixel = 0
 	scroll.ScrollBarThickness = 6
@@ -103,16 +108,16 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 	scroll.Parent = content
 
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.fromOffset(152, 134)
-	grid.CellPadding = UDim2.fromOffset(8, 8)
+	grid.CellSize = UDim2.new(0.23, 0, 0, 102)
+	grid.CellPadding = UDim2.new(0.02, 0, 0, 8)
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = scroll
 
 	local sellBtn = Theme.MakeButton(
 		"SellSelectedBtn",
 		"Select Pets to Sell",
-		UDim2.fromOffset(290, 48),
-		UDim2.new(0.5, -145, 1, -50),
+		UDim2.fromOffset(270, 38),
+		UDim2.new(0.5, -135, 1, -40),
 		Theme.AccentGreen,
 		content,
 		function()
@@ -215,14 +220,14 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 				-- 3D Pet Viewport (frameless, no dark background!)
 				local vpHolder = Instance.new("Frame")
 				vpHolder.Name = "ViewportHolder"
-				vpHolder.Size = UDim2.fromOffset(66, 62)
-				vpHolder.Position = UDim2.new(0.5, -33, 0, 4)
+				vpHolder.Size = UDim2.fromScale(0.84, 0.54)
+				vpHolder.Position = UDim2.fromScale(0.08, 0.02)
 				vpHolder.BackgroundTransparency = 1
 				vpHolder.Parent = card
 				PetVisuals.MountViewport(vpHolder, item.PetId, item.Mutation, UDim2.fromScale(1, 1), UDim2.fromScale(0, 0))
 
 				if isSel then
-					local badge = Theme.MakeLabel("SelBadge", "✅ SELL", UDim2.fromOffset(58, 18), UDim2.fromOffset(4, 4), Theme.FontTitle, Theme.AccentGreen, card)
+					local badge = Theme.MakeLabel("SelBadge", "✅ SELL", UDim2.fromOffset(54, 16), UDim2.fromOffset(4, 2), Theme.FontTitle, Theme.AccentGreen, card)
 					badge.TextXAlignment = Enum.TextXAlignment.Left
 				end
 
@@ -230,8 +235,8 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 				Theme.MakeLabel(
 					"Name",
 					`{prefix}{info.DisplayName}`,
-					UDim2.new(0.92, 0, 0, 20),
-					UDim2.fromOffset(6, 68),
+					UDim2.fromScale(0.92, 0.21),
+					UDim2.fromScale(0.04, 0.56),
 					Theme.FontTitle,
 					if mutInfo then mutInfo.Color else rarity.Color,
 					card
@@ -239,21 +244,11 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 
 				Theme.MakeLabel(
 					"Price",
-					`💵 $${NumberFormat.Short(sellVal)}`,
-					UDim2.new(0.92, 0, 0, 22),
-					UDim2.fromOffset(6, 90),
+					`💵 ${NumberFormat.Short(sellVal)}`,
+					UDim2.fromScale(0.92, 0.21),
+					UDim2.fromScale(0.04, 0.77),
 					Theme.FontTitle,
 					Theme.AccentGold,
-					card
-				)
-
-				Theme.MakeLabel(
-					"Hint",
-					if isSel then "Click to Unselect" else "Click to Select",
-					UDim2.new(0.92, 0, 0, 16),
-					UDim2.fromOffset(6, 113),
-					Theme.FontBody,
-					if isSel then Theme.AccentGreen else Theme.TextMuted,
 					card
 				)
 
@@ -273,8 +268,8 @@ function SellPetPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenReques
 		selectAllBtn.Text = if allSelected then "✖️ Clear All" else "☑️ Select All"
 
 		if selectedCount > 0 then
-			infoLabel.Text = `Selected: {selectedCount} Unused Pet(s)  |  Total Payout: $${NumberFormat.Short(selectedTotalValue)}`
-			sellBtn.Text = `💰 SELL {selectedCount} PET(S) FOR $${NumberFormat.Short(selectedTotalValue)}`
+			infoLabel.Text = `Selected: {selectedCount} Unused Pet(s)  |  Total Payout: ${NumberFormat.Short(selectedTotalValue)}`
+			sellBtn.Text = `💰 SELL {selectedCount} PET(S) FOR ${NumberFormat.Short(selectedTotalValue)}`
 			sellBtn.BackgroundColor3 = Theme.AccentGreen
 		else
 			infoLabel.Text = `Unused Pets in Backpack: {#unusedPets} — Click pets below to sell!`

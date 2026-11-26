@@ -152,7 +152,7 @@ function ShopPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 			speedBtn.BackgroundColor3 = Theme.BgHeader
 			speedBtn.Active = false
 		else
-			speedBtn.Text = `Buy {NumberFormat.Short(speedPrice)}`
+			speedBtn.Text = `Buy ${NumberFormat.Short(speedPrice)}`
 			local canAfford = money >= speedPrice
 			speedBtn.BackgroundColor3 = if canAfford then Theme.AccentGreen else Theme.BgHeader
 			speedBtn.Active = canAfford
@@ -169,7 +169,7 @@ function ShopPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 			slotBtn.BackgroundColor3 = Theme.BgHeader
 			slotBtn.Active = false
 		else
-			slotBtn.Text = `Buy $${NumberFormat.Short(slotPrice)}`
+			slotBtn.Text = `Buy ${NumberFormat.Short(slotPrice)}`
 			local canAfford = money >= slotPrice
 			slotBtn.BackgroundColor3 = if canAfford then Theme.AccentGreen else Theme.BgHeader
 			slotBtn.Active = canAfford

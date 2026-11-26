@@ -23,8 +23,8 @@ function AbilityButton.Init(screenGui: ScreenGui)
 
 	local btn = Instance.new("TextButton")
 	btn.Name = "AbilityButton"
-	btn.Size = UDim2.fromOffset(228, 66)
-	btn.Position = UDim2.new(1, -12, 1, -12)
+	btn.Size = UDim2.fromOffset(186, 54)
+	btn.Position = UDim2.new(1, -14, 1, -14)
 	btn.AnchorPoint = Vector2.new(1, 1)
 	btn.BackgroundColor3 = Color3.fromRGB(24, 28, 38)
 	btn.BackgroundTransparency = 0.08
@@ -35,18 +35,28 @@ function AbilityButton.Init(screenGui: ScreenGui)
 	local cardStroke = Theme.AddStroke(btn, Theme.AccentGold, 2.5)
 	btn.Parent = screenGui
 
+	-- Keep the Active/Passive Skill Card in the Bottom-Right (cleanly between SideMenu and Mobile Jump Button on CP!)
+	Theme.BindResponsiveScale(btn, 0.72, function(isCompact: boolean)
+		btn.AnchorPoint = Vector2.new(1, 1)
+		if isCompact then
+			btn.Position = UDim2.new(1, -10, 1, -108)
+		else
+			btn.Position = UDim2.new(1, -14, 1, -14)
+		end
+	end)
+
 	local iconHolder = Instance.new("Frame")
 	iconHolder.Name = "IconHolder"
-	iconHolder.Size = UDim2.fromOffset(52, 52)
-	iconHolder.Position = UDim2.fromOffset(6, 7)
+	iconHolder.Size = UDim2.fromOffset(46, 46)
+	iconHolder.Position = UDim2.fromOffset(5, 6)
 	iconHolder.BackgroundTransparency = 1
 	iconHolder.Parent = btn
 
 	local titleLabel = Theme.MakeLabel(
 		"Title",
 		"⚡ ACTIVE SKILL [Q]",
-		UDim2.new(1, -66, 0, 20),
-		UDim2.fromOffset(62, 5),
+		UDim2.new(1, -58, 0, 18),
+		UDim2.fromOffset(54, 4),
 		Theme.FontTitle,
 		Theme.AccentGold,
 		btn
@@ -56,8 +66,8 @@ function AbilityButton.Init(screenGui: ScreenGui)
 	local descLabel = Theme.MakeLabel(
 		"Desc",
 		"Press Q or Tap to activate skill!",
-		UDim2.new(1, -66, 0, 34),
-		UDim2.fromOffset(62, 26),
+		UDim2.new(1, -58, 0, 32),
+		UDim2.fromOffset(54, 22),
 		Theme.FontBody,
 		Color3.fromRGB(225, 232, 245),
 		btn

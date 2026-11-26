@@ -38,8 +38,8 @@ local currentPets: { ClientPet } = {}
 local sellConfirmUid: string? = nil
 local listeners: { (pets: { ClientPet }) -> () } = {}
 
-local OPEN_POS = UDim2.new(1, -12, 0.5, 0)
-local CLOSED_POS = UDim2.new(1, 260, 0.5, 0)
+local OPEN_POS = UDim2.new(1, -10, 0, 8)
+local CLOSED_POS = UDim2.new(1, 260, 0, 8)
 
 local function getPetIncome(item: ClientPet): number
 	local info = PetData.Get(item.PetId)
@@ -89,19 +89,20 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 	local petActionFn = Remotes.GetFunction("PetActionRequest")
 	local shopFn = Remotes.GetFunction("ShopRequest")
 
-	-- Compact Slide-Left Dropdown Drawer (replaces right-side menu while open!)
+	-- Compact Slide-Left Dropdown Drawer (Anchored to Top-Right so it never overlaps the Mobile Jump Button!)
 	drawerFrame = Theme.MakeFrame(
 		"ActivePetsDrawer",
-		UDim2.fromOffset(236, 236),
+		UDim2.fromOffset(236, 224),
 		CLOSED_POS,
 		Color3.fromRGB(28, 30, 38),
 		10,
 		screenGui
 	)
-	drawerFrame.AnchorPoint = Vector2.new(1, 0.5)
+	drawerFrame.AnchorPoint = Vector2.new(1, 0)
 	drawerFrame.Visible = false
 	drawerFrame.ZIndex = 18
 	Theme.AddStroke(drawerFrame, Color3.fromRGB(15, 16, 22), 3)
+	Theme.BindResponsiveScale(drawerFrame, 0.78)
 
 	-- Red ">" Collapse Tab on the Left Edge (restores right-side menu on close!)
 	local collapseBtn = Theme.MakeButton(
@@ -305,7 +306,7 @@ function InventoryPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 				local confirming = (sellConfirmUid == item.Uid)
 				Theme.MakeButton(
 					"SellBtn",
-					if confirming then `$${NumberFormat.Short(sellVal)}?` else "Sell",
+					if confirming then `${NumberFormat.Short(sellVal)}?` else "Sell",
 					UDim2.fromOffset(46, 28),
 					UDim2.new(1, btnX - 46, 0.5, -14),
 					Theme.AccentRed,

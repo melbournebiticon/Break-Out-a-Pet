@@ -229,29 +229,33 @@ end
 function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	local player = Players.LocalPlayer
 
-	-- LEFT-SIDE STATS HUD (Total Money + Character Speed + Slow Mode Toggle + Active Fiesta Boosts)
+	-- LEFT-SIDE STATS HUD (Anchored to Top-Left so the Bottom-Left is 100% clear for the Mobile Thumbstick!)
 	local leftStats = Instance.new("Frame")
 	leftStats.Name = "LeftStatsHud"
-	leftStats.Size = UDim2.fromOffset(195, 290)
-	leftStats.Position = UDim2.new(0, 16, 0.5, 0)
-	leftStats.AnchorPoint = Vector2.new(0, 0.5)
+	leftStats.Size = UDim2.fromOffset(172, 240)
+	leftStats.Position = UDim2.new(0, 12, 0, 8)
+	leftStats.AnchorPoint = Vector2.new(0, 0)
 	leftStats.BackgroundTransparency = 1
 	leftStats.Parent = screenGui
 
 	local leftLayout = Instance.new("UIListLayout")
-	leftLayout.Padding = UDim.new(0, 8)
+	leftLayout.Padding = UDim.new(0, 6)
 	leftLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	leftLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	leftLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 	leftLayout.Parent = leftStats
 
+	Theme.BindResponsiveScale(leftStats, 0.74, function(isCompact: boolean)
+		leftStats.Position = if isCompact then UDim2.new(0, 8, 0, 6) else UDim2.new(0, 14, 0, 14)
+	end)
+
 	-- 1) Total Money Pill on the Left
-	local moneyCard = Theme.MakeFrame("MoneyCard", UDim2.fromOffset(180, 50), UDim2.fromScale(0, 0), Theme.BgDark, 14, leftStats)
+	local moneyCard = Theme.MakeFrame("MoneyCard", UDim2.fromOffset(168, 42), UDim2.fromScale(0, 0), Theme.BgDark, 12, leftStats)
 	Theme.AddStroke(moneyCard, Theme.AccentGold, 2)
 	local moneyLabel = Theme.MakeLabel("MoneyLabel", "💵 $0", UDim2.fromScale(0.90, 0.74), UDim2.fromScale(0.05, 0.13), Theme.FontTitle, Theme.AccentGold, moneyCard)
 	moneyLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 	-- 2) Character WalkSpeed Pill on the Left
-	local speedCard = Theme.MakeFrame("SpeedCard", UDim2.fromOffset(180, 50), UDim2.fromScale(0, 0), Theme.BgDark, 14, leftStats)
+	local speedCard = Theme.MakeFrame("SpeedCard", UDim2.fromOffset(168, 42), UDim2.fromScale(0, 0), Theme.BgDark, 12, leftStats)
 	Theme.AddStroke(speedCard, Theme.AccentBlue, 2)
 	local speedLabel = Theme.MakeLabel("SpeedLabel", "⚡ Speed: 16.0", UDim2.fromScale(0.90, 0.74), UDim2.fromScale(0.05, 0.13), Theme.FontTitle, Color3.fromRGB(120, 215, 255), speedCard)
 	speedLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -259,13 +263,13 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	-- Music Toggle & Slow Mode Button Row
 	local utilityRow = Instance.new("Frame")
 	utilityRow.Name = "UtilityRow"
-	utilityRow.Size = UDim2.fromOffset(180, 38)
+	utilityRow.Size = UDim2.fromOffset(168, 32)
 	utilityRow.BackgroundTransparency = 1
 	utilityRow.Parent = leftStats
 
 	-- 3) Slow Mode Toggle Button (Like Steal a Pet!)
 	local slowModeEvent = Remotes.GetEvent("ToggleSlowMode")
-	local slowBtn = Theme.MakeButton("SlowModeBtn", "🐢 Slow: OFF", UDim2.fromOffset(128, 38), UDim2.fromScale(0, 0), Theme.BgCard, utilityRow, function()
+	local slowBtn = Theme.MakeButton("SlowModeBtn", "🐢 Slow: OFF", UDim2.fromOffset(122, 32), UDim2.fromScale(0, 0), Theme.BgCard, utilityRow, function()
 		slowModeEvent:FireServer()
 	end)
 	Theme.AddStroke(slowBtn, Theme.BgHeader, 2)
@@ -278,7 +282,7 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	updateSlowBtn()
 
 	-- 3b) BGM Music Mute/Unmute Button (Grow a Garden BGM)
-	local musicBtn = Theme.MakeButton("MusicBtn", "🎵", UDim2.fromOffset(46, 38), UDim2.fromOffset(134, 0), Theme.BgCard, utilityRow, function()
+	local musicBtn = Theme.MakeButton("MusicBtn", "🎵", UDim2.fromOffset(40, 32), UDim2.fromOffset(128, 0), Theme.BgCard, utilityRow, function()
 		local isOn = SoundController.ToggleMusic()
 		local mBtn = utilityRow:FindFirstChild("MusicBtn")
 		if mBtn and mBtn:IsA("TextButton") then
@@ -289,21 +293,21 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	Theme.AddStroke(musicBtn, Theme.BgHeader, 2)
 
 	-- 4) Live Fiesta Event Status & Active Fiesta Boost Pills on the Left HUD!
-	local fiestaBanner = Theme.MakeFrame("FiestaBanner", UDim2.fromOffset(180, 32), UDim2.fromScale(0, 0), Color3.fromRGB(38, 26, 54), 10, leftStats)
+	local fiestaBanner = Theme.MakeFrame("FiestaBanner", UDim2.fromOffset(168, 28), UDim2.fromScale(0, 0), Color3.fromRGB(38, 26, 54), 10, leftStats)
 	Theme.AddStroke(fiestaBanner, Theme.AccentGold, 1.5)
 	local fiestaBannerLbl = Theme.MakeLabel("Text", "🎪 Fiesta Plaza Ready!", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, fiestaBanner)
 
-	local speedBoostPill = Theme.MakeFrame("SpeedBoostPill", UDim2.fromOffset(180, 26), UDim2.fromScale(0, 0), Color3.fromRGB(18, 48, 68), 8, leftStats)
+	local speedBoostPill = Theme.MakeFrame("SpeedBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(18, 48, 68), 8, leftStats)
 	speedBoostPill.Visible = false
 	Theme.AddStroke(speedBoostPill, Color3.fromRGB(80, 235, 255), 1.5)
 	local speedBoostLbl = Theme.MakeLabel("Text", "⚡ 2x Treadmill (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Color3.fromRGB(80, 235, 255), speedBoostPill)
 
-	local moneyBoostPill = Theme.MakeFrame("MoneyBoostPill", UDim2.fromOffset(180, 26), UDim2.fromScale(0, 0), Color3.fromRGB(18, 56, 32), 8, leftStats)
+	local moneyBoostPill = Theme.MakeFrame("MoneyBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(18, 56, 32), 8, leftStats)
 	moneyBoostPill.Visible = false
 	Theme.AddStroke(moneyBoostPill, Theme.AccentGreen, 1.5)
 	local moneyBoostLbl = Theme.MakeLabel("Text", "💰 2x Pet Cash (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGreen, moneyBoostPill)
 
-	local luckBoostPill = Theme.MakeFrame("LuckBoostPill", UDim2.fromOffset(180, 26), UDim2.fromScale(0, 0), Color3.fromRGB(58, 42, 16), 8, leftStats)
+	local luckBoostPill = Theme.MakeFrame("LuckBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(58, 42, 16), 8, leftStats)
 	luckBoostPill.Visible = false
 	Theme.AddStroke(luckBoostPill, Theme.AccentGold, 1.5)
 	local luckBoostLbl = Theme.MakeLabel("Text", "🍀 2x Luck & Unlock (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, luckBoostPill)
@@ -359,10 +363,10 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 		local m = player:GetAttribute("Money")
 		local num = if typeof(m) == "number" then m else 0
 		moneyLabel.Text = `💵 ${NumberFormat.Short(num)}`
-		TweenService:Create(moneyCard, TweenInfo.new(0.07), { Size = UDim2.fromOffset(188, 55) }):Play()
+		TweenService:Create(moneyCard, TweenInfo.new(0.07), { Size = UDim2.fromOffset(174, 45) }):Play()
 		task.delay(0.07, function()
 			if moneyCard.Parent then
-				TweenService:Create(moneyCard, TweenInfo.new(0.09), { Size = UDim2.fromOffset(180, 52) }):Play()
+				TweenService:Create(moneyCard, TweenInfo.new(0.09), { Size = UDim2.fromOffset(168, 42) }):Play()
 			end
 		end)
 	end
@@ -383,21 +387,22 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	-- SLIDE-LEFT "UNLOCKING CAGES" DRAWER (Manual open only via Cages button; replaces right-side menu while open!)
 	local remoteOpenCageEvent = Remotes.GetEvent("RemoteOpenPlotCage")
 	local cagesDrawerOpen = false
-	local cagesOpenPos = UDim2.new(1, -12, 0.5, 0)
-	local cagesClosedPos = UDim2.new(1, 260, 0.5, 0)
+	local cagesOpenPos = UDim2.new(1, -10, 0, 8)
+	local cagesClosedPos = UDim2.new(1, 260, 0, 8)
 
 	local cagesDrawer = Theme.MakeFrame(
 		"UnlockingCagesDrawer",
-		UDim2.fromOffset(236, 224),
+		UDim2.fromOffset(236, 214),
 		cagesClosedPos,
 		Color3.fromRGB(28, 30, 38),
 		10,
 		screenGui
 	)
-	cagesDrawer.AnchorPoint = Vector2.new(1, 0.5)
+	cagesDrawer.AnchorPoint = Vector2.new(1, 0)
 	cagesDrawer.Visible = false
 	cagesDrawer.ZIndex = 18
 	Theme.AddStroke(cagesDrawer, Color3.fromRGB(15, 16, 22), 3)
+	Theme.BindResponsiveScale(cagesDrawer, 0.78)
 
 	local function setCagesDrawerVisible(visible: boolean)
 		cagesDrawerOpen = visible
@@ -589,23 +594,27 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 		end
 	end)
 
-	-- RIGHT-SIDE MENU BUTTONS (Compact & hides when any panel/drawer is open!)
+	-- RIGHT-SIDE MENU BUTTONS (Anchored to Top-Right so it NEVER overlaps the Mobile Jump Button!)
 	local sideMenu = Instance.new("Frame")
 	sideMenu.Name = "SideMenu"
-	sideMenu.Size = UDim2.fromOffset(108, 285)
-	sideMenu.Position = UDim2.new(1, -12, 0.5, 0)
-	sideMenu.AnchorPoint = Vector2.new(1, 0.5)
+	sideMenu.Size = UDim2.fromOffset(102, 236)
+	sideMenu.Position = UDim2.new(1, -10, 0, 8)
+	sideMenu.AnchorPoint = Vector2.new(1, 0)
 	sideMenu.BackgroundTransparency = 1
 	sideMenu.Parent = screenGui
 	sideMenuFrame = sideMenu
 
 	local listLayout = Instance.new("UIListLayout")
-	listLayout.Padding = UDim.new(0, 6)
+	listLayout.Padding = UDim.new(0, 5)
 	listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-	listLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	listLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 	listLayout.Parent = sideMenu
 
-	Theme.MakeButton("CagesBtn", "📦 Cages", UDim2.fromOffset(104, 40), UDim2.fromScale(0, 0), Color3.fromRGB(235, 95, 75), sideMenu, function()
+	Theme.BindResponsiveScale(sideMenu, 0.72, function(isCompact: boolean)
+		sideMenu.Position = if isCompact then UDim2.new(1, -8, 0, 6) else UDim2.new(1, -12, 0, 14)
+	end)
+
+	Theme.MakeButton("CagesBtn", "📦 Cages", UDim2.fromOffset(98, 34), UDim2.fromScale(0, 0), Color3.fromRGB(235, 95, 75), sideMenu, function()
 		setCagesDrawerVisible(not cagesDrawerOpen)
 	end)
 
@@ -618,7 +627,7 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	}
 
 	for _, b in buttons do
-		Theme.MakeButton(b.id .. "Btn", b.text, UDim2.fromOffset(104, 40), UDim2.fromScale(0, 0), b.color, sideMenu, function()
+		Theme.MakeButton(b.id .. "Btn", b.text, UDim2.fromOffset(98, 34), UDim2.fromScale(0, 0), b.color, sideMenu, function()
 			cagesDrawerOpen = false
 			cagesDrawer.Visible = false
 			callbacks.TogglePanel(b.id)
@@ -678,11 +687,14 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 
 	local hotbarFrame = Instance.new("Frame")
 	hotbarFrame.Name = "ViewportHotbar"
-	hotbarFrame.Size = UDim2.fromOffset(540, 66)
-	hotbarFrame.Position = UDim2.new(0.5, 0, 1, -8)
+	hotbarFrame.Size = UDim2.fromOffset(530, 64)
+	hotbarFrame.Position = UDim2.new(0.5, 0, 1, -6)
 	hotbarFrame.AnchorPoint = Vector2.new(0.5, 1)
 	hotbarFrame.BackgroundTransparency = 1
 	hotbarFrame.Parent = screenGui
+	Theme.BindResponsiveScale(hotbarFrame, 0.72, function(isCompact: boolean)
+		hotbarFrame.Position = if isCompact then UDim2.new(0.5, 0, 1, -3) else UDim2.new(0.5, 0, 1, -8)
+	end)
 
 	local hotbarLayout = Instance.new("UIListLayout")
 	hotbarLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -842,13 +854,24 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	local placeCageEvent = Remotes.GetEvent("PlaceCageOnPlot")
 	local dropCageEvent = Remotes.GetEvent("DropCarriedCage")
 
+	local cageActionBar = Instance.new("Frame")
+	cageActionBar.Name = "CageActionBar"
+	cageActionBar.Size = UDim2.fromOffset(410, 42)
+	cageActionBar.Position = UDim2.new(0.5, 0, 1, -80)
+	cageActionBar.AnchorPoint = Vector2.new(0.5, 1)
+	cageActionBar.BackgroundTransparency = 1
+	cageActionBar.Parent = screenGui
+	Theme.BindResponsiveScale(cageActionBar, 0.75, function(isCompact: boolean)
+		cageActionBar.Position = if isCompact then UDim2.new(0.5, 0, 1, -56) else UDim2.new(0.5, 0, 1, -82)
+	end)
+
 	local placeCageBtn = Theme.MakeButton(
 		"PlaceCageBtn",
 		"📦 Tap / Click Plot to Place Cage",
 		UDim2.fromOffset(235, 42),
-		UDim2.new(0.5, -242, 1, -126),
+		UDim2.new(0.5, -203, 0, 0),
 		Theme.AccentGreen,
-		screenGui,
+		cageActionBar,
 		function()
 			placeCageEvent:FireServer()
 		end
@@ -860,9 +883,9 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 		"DropCageBtn",
 		"🗑️ Drop Cage (G)",
 		UDim2.fromOffset(165, 42),
-		UDim2.new(0.5, -82, 1, -126),
+		UDim2.new(0.5, -82, 0, 0),
 		Theme.AccentRed,
-		screenGui,
+		cageActionBar,
 		function()
 			dropCageEvent:FireServer()
 		end
@@ -948,8 +971,8 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 		placeCageBtn.Visible = nearOwnPlot
 		dropCageBtn.Visible = isCarrying
 		dropCageBtn.Position = if nearOwnPlot
-			then UDim2.new(0.5, 4, 1, -126)
-			else UDim2.new(0.5, -82, 1, -126)
+			then UDim2.new(0.5, 38, 0, 0)
+			else UDim2.new(0.5, -82, 0, 0)
 
 		if chaseEdge.Visible then
 			local pulse = 0.25 + 0.55 * math.abs(math.sin(os.clock() * 5))

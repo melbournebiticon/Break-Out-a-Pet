@@ -366,7 +366,7 @@ function Blockout.EnsureMap()
 	end
 
 	local existingPrison = workspace:FindFirstChild("Prison")
-	if existingPrison and not existingPrison:GetAttribute("RedesignedV26") then
+	if existingPrison and not existingPrison:GetAttribute("RedesignedV27") then
 		existingPrison:Destroy()
 		for _, folderName in { "BasePlots", "Lobby", "PatrolPoints", "EnemySpawns", "Enemies" } do
 			local f = workspace:FindFirstChild(folderName)
@@ -381,7 +381,7 @@ function Blockout.EnsureMap()
 	if not prison then
 		prison = Instance.new("Folder")
 		prison.Name = "Prison"
-		prison:SetAttribute("RedesignedV26", true)
+		prison:SetAttribute("RedesignedV27", true)
 		prison.Parent = workspace
 
 		-- Far Ocean Water extension so water stretches seamlessly all the way past Zone 20!
@@ -786,29 +786,34 @@ function Blockout.EnsureMap()
 		addSurfaceSign(fiestaSign, Enum.NormalId.Front, "🎪 FIESTA EVENT PLAZA 🎉", "Join Rotating Pinoy Fiesta Events for 2x Speed, Cash & Luck Boosts!", Color3.fromRGB(255, 215, 55))
 		CollectionService:AddTag(fiestaSign, "FiestaStageSign")
 
-		-- BENTAHAN NG PET (Pet Buy & Sell Market Stand + Step-On Pad on the right side of the Plaza!)
-		local sellCenter = Vector3.new(30, 0, -18)
+		-- BENTAHAN NG PET (Enlarged Grand Pet Buy & Sell Market Stand + Big Glowing Step-On Pad!)
+		local sellCenter = Vector3.new(32, 0, -21)
 		local sellStand = Instance.new("Model")
 		sellStand.Name = "BentahanNgPet"
 		sellStand.Parent = lobby
 
-		makePart("SellCounterBase", Vector3.new(12, 3.2, 4.2), sellCenter + Vector3.new(0, 1.6, -2.5), Color3.fromRGB(138, 92, 48), sellStand, Enum.Material.WoodPlanks)
-		makePart("SellCounterTop", Vector3.new(12.8, 0.4, 4.8), sellCenter + Vector3.new(0, 3.35, -2.5), Color3.fromRGB(245, 195, 55), sellStand, Enum.Material.Wood)
-		makePart("SellPostL", Vector3.new(0.7, 9.2, 0.7), sellCenter + Vector3.new(-5.6, 4.6, -4.2), Color3.fromRGB(110, 72, 36), sellStand, Enum.Material.Wood)
-		makePart("SellPostR", Vector3.new(0.7, 9.2, 0.7), sellCenter + Vector3.new(5.6, 4.6, -4.2), Color3.fromRGB(110, 72, 36), sellStand, Enum.Material.Wood)
-		makePart("SellAwning", Vector3.new(13.4, 0.5, 5.6), sellCenter + Vector3.new(0, 8.6, -2.5), Color3.fromRGB(45, 185, 85), sellStand, Enum.Material.Fabric)
+		makePart("SellCounterBase", Vector3.new(20, 3.4, 4.8), sellCenter + Vector3.new(0, 1.7, -2.5), Color3.fromRGB(138, 92, 48), sellStand, Enum.Material.WoodPlanks)
+		makePart("SellCounterTop", Vector3.new(21, 0.45, 5.4), sellCenter + Vector3.new(0, 3.55, -2.5), Color3.fromRGB(245, 195, 55), sellStand, Enum.Material.Wood)
+		makePart("SellPostL", Vector3.new(0.85, 9.8, 0.85), sellCenter + Vector3.new(-9.2, 4.9, -4.3), Color3.fromRGB(110, 72, 36), sellStand, Enum.Material.Wood)
+		makePart("SellPostR", Vector3.new(0.85, 9.8, 0.85), sellCenter + Vector3.new(9.2, 4.9, -4.3), Color3.fromRGB(110, 72, 36), sellStand, Enum.Material.Wood)
+		makePart("SellAwning", Vector3.new(21.6, 0.55, 6.2), sellCenter + Vector3.new(0, 9.0, -2.5), Color3.fromRGB(45, 185, 85), sellStand, Enum.Material.Fabric)
 
-		local sellSign = makePart("SellSign", Vector3.new(13.2, 2.5, 1.0), sellCenter + Vector3.new(0, 10.0, -4.2), Color3.fromRGB(22, 34, 28), sellStand, Enum.Material.Metal)
-		addSurfaceSign(sellSign, Enum.NormalId.Back, "💰 BENTAHAN NG PET", "Step on Circle to Sell Unused Pets!", Color3.fromRGB(95, 255, 130))
-		addSurfaceSign(sellSign, Enum.NormalId.Front, "💰 BENTAHAN NG PET", "Step on Circle to Sell Unused Pets!", Color3.fromRGB(95, 255, 130))
+		-- Decorative Gold Ingots & Cash Crates on the Bentahan Counter
+		for gx = -6, 6, 4 do
+			makePart(`GoldStack_{gx}`, Vector3.new(2.2, 1.1, 1.6), sellCenter + Vector3.new(gx, 4.25, -2.5), Color3.fromRGB(255, 215, 55), sellStand, Enum.Material.Neon)
+		end
 
-		-- Glowing Step-On Pad in front of the Bentahan counter
-		makePart("SellPadBase", Vector3.new(9.6, 0.45, 9.6), sellCenter + Vector3.new(0, 0.45, 3.6), Color3.fromRGB(38, 46, 54), sellStand, Enum.Material.Metal)
-		local sellPad = makePart("PetSellPad", Vector3.new(8.2, 0.55, 8.2), sellCenter + Vector3.new(0, 0.58, 3.6), Color3.fromRGB(65, 235, 115), sellStand, Enum.Material.Neon)
+		local sellSign = makePart("SellSign", Vector3.new(20.5, 2.7, 1.0), sellCenter + Vector3.new(0, 10.5, -4.3), Color3.fromRGB(22, 34, 28), sellStand, Enum.Material.Metal)
+		addSurfaceSign(sellSign, Enum.NormalId.Back, "💰 BENTAHAN NG PET 💰", "Step on Green Pad to Sell Unused Pets for Instant Cash!", Color3.fromRGB(95, 255, 130))
+		addSurfaceSign(sellSign, Enum.NormalId.Front, "💰 BENTAHAN NG PET 💰", "Step on Green Pad to Sell Unused Pets for Instant Cash!", Color3.fromRGB(95, 255, 130))
+
+		-- Larger Glowing Step-On Pad in front of the Bentahan counter
+		makePart("SellPadBase", Vector3.new(14.0, 0.45, 11.0), sellCenter + Vector3.new(0, 0.45, 4.5), Color3.fromRGB(38, 46, 54), sellStand, Enum.Material.Metal)
+		local sellPad = makePart("PetSellPad", Vector3.new(12.6, 0.55, 9.6), sellCenter + Vector3.new(0, 0.58, 4.5), Color3.fromRGB(65, 235, 115), sellStand, Enum.Material.Neon)
 		CollectionService:AddTag(sellPad, "PetSellPad")
 
-		makePart("BoardStand", Vector3.new(16, 1.2, 3), Vector3.new(52, 0.6, -18), Color3.fromRGB(50, 55, 70), lobby, Enum.Material.Metal)
-		local board = makePart("LeaderboardBoard", Vector3.new(16, 11, 1), Vector3.new(52, 6.7, -18), Color3.fromRGB(25, 30, 45), lobby, Enum.Material.Metal)
+		makePart("BoardStand", Vector3.new(16, 1.2, 3), Vector3.new(56, 0.6, -18), Color3.fromRGB(50, 55, 70), lobby, Enum.Material.Metal)
+		local board = makePart("LeaderboardBoard", Vector3.new(16, 11, 1), Vector3.new(56, 6.7, -18), Color3.fromRGB(25, 30, 45), lobby, Enum.Material.Metal)
 		CollectionService:AddTag(board, "LeaderboardBoard")
 	end
 

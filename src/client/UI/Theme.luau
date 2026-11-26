@@ -3,6 +3,7 @@
 -- Shared mobile-first UI colors, fonts, corners, strokes, and press-tween button builders.
 
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local SoundController = require(script.Parent.Parent:WaitForChild("SoundController"))
 
 local Theme = {
@@ -21,18 +22,20 @@ local Theme = {
 	FontBody = Enum.Font.GothamBold,
 }
 
-function Theme.AddCorner(parent: GuiObject, radius: number)
+function Theme.AddCorner(parent: GuiObject, radius: number): UICorner
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, radius)
 	corner.Parent = parent
+	return corner
 end
 
-function Theme.AddStroke(parent: GuiObject, color: Color3, thickness: number)
+function Theme.AddStroke(parent: GuiObject, color: Color3, thickness: number): UIStroke
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = color
 	stroke.Thickness = thickness
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = parent
+	return stroke
 end
 
 function Theme.MakeFrame(name: string, size: UDim2, position: UDim2, color: Color3, radius: number, parent: Instance): Frame
@@ -101,11 +104,61 @@ function Theme.MakeButton(name: string, text: string, size: UDim2, position: UDi
 	return btn
 end
 
+function Theme.IsCompactScreen(): boolean
+	local cam = workspace.CurrentCamera
+	if cam then
+		local vp = cam.ViewportSize
+		if vp.Y > 0 and (vp.Y < 540 or vp.X < 900) then
+			return true
+		end
+	end
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+function Theme.BindResponsiveScale(target: GuiObject, compactScale: number, onUpdate: ((isCompact: boolean) -> ())?): UIScale
+	local uiScale = target:FindFirstChildOfClass("UIScale")
+	if not uiScale then
+		uiScale = Instance.new("UIScale")
+		uiScale.Parent = target
+	end
+
+	local function refresh()
+		local compact = Theme.IsCompactScreen()
+		local cam = workspace.CurrentCamera
+		local vpY = if cam and cam.ViewportSize.Y > 0 then cam.ViewportSize.Y else 720
+		if compact then
+			-- Scale proportionally for smaller mobile viewports (e.g. 340px..500px height)
+			local dynamic = math.clamp((vpY / 480) * compactScale, compactScale * 0.85, compactScale)
+			uiScale.Scale = dynamic
+		else
+			uiScale.Scale = 1.0
+		end
+		if onUpdate then
+			onUpdate(compact)
+		end
+	end
+
+	refresh()
+	local cam = workspace.CurrentCamera
+	if cam then
+		cam:GetPropertyChangedSignal("ViewportSize"):Connect(refresh)
+	end
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+		local newCam = workspace.CurrentCamera
+		if newCam then
+			newCam:GetPropertyChangedSignal("ViewportSize"):Connect(refresh)
+			refresh()
+		end
+	end)
+
+	return uiScale
+end
+
 function Theme.MakeModalShell(screenGui: ScreenGui, titleText: string, onClose: () -> ()): (Frame, Frame)
 	local modal = Theme.MakeFrame(
 		titleText .. "Modal",
-		UDim2.fromScale(0.62, 0.68),
-		UDim2.fromScale(0.5, 0.5),
+		UDim2.fromScale(0.72, 0.75),
+		UDim2.fromScale(0.5, 0.45),
 		Theme.BgDark,
 		14,
 		screenGui
@@ -116,21 +169,21 @@ function Theme.MakeModalShell(screenGui: ScreenGui, titleText: string, onClose: 
 	Theme.AddStroke(modal, Theme.BgHeader, 3)
 
 	local sizeConstraint = Instance.new("UISizeConstraint")
-	sizeConstraint.MinSize = Vector2.new(300, 250)
-	sizeConstraint.MaxSize = Vector2.new(620, 440)
+	sizeConstraint.MinSize = Vector2.new(380, 235)
+	sizeConstraint.MaxSize = Vector2.new(660, 440)
 	sizeConstraint.Parent = modal
 
-	local header = Theme.MakeFrame("Header", UDim2.new(1, 0, 0, 44), UDim2.fromScale(0, 0), Theme.BgHeader, 12, modal)
-	local title = Theme.MakeLabel("Title", titleText, UDim2.new(0.76, 0, 0.8, 0), UDim2.fromScale(0.04, 0.1), Theme.FontTitle, Theme.TextPrimary, header)
+	local header = Theme.MakeFrame("Header", UDim2.new(1, 0, 0, 38), UDim2.fromScale(0, 0), Theme.BgHeader, 12, modal)
+	local title = Theme.MakeLabel("Title", titleText, UDim2.new(0.82, 0, 0.82, 0), UDim2.fromScale(0.03, 0.09), Theme.FontTitle, Theme.TextPrimary, header)
 	title.TextXAlignment = Enum.TextXAlignment.Left
 
-	local closeBtn = Theme.MakeButton("Close", "✕", UDim2.fromOffset(38, 34), UDim2.new(1, -44, 0, 5), Theme.AccentRed, header, onClose)
+	local closeBtn = Theme.MakeButton("Close", "X", UDim2.fromOffset(34, 28), UDim2.new(1, -40, 0, 5), Theme.AccentRed, header, onClose)
 	closeBtn.AnchorPoint = Vector2.new(0, 0)
 
 	local content = Instance.new("Frame")
 	content.Name = "Content"
-	content.Size = UDim2.new(1, -20, 1, -56)
-	content.Position = UDim2.fromOffset(10, 48)
+	content.Size = UDim2.new(1, -16, 1, -46)
+	content.Position = UDim2.fromOffset(8, 42)
 	content.BackgroundTransparency = 1
 	content.Parent = modal
 

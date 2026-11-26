@@ -9,6 +9,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local FusionData = require(Shared:WaitForChild("FusionData"))
 local PetData = require(Shared:WaitForChild("PetData"))
+local PetVisuals = require(Shared:WaitForChild("PetVisuals"))
+local MutationData = require(Shared:WaitForChild("MutationData"))
 local Rarities = require(Shared:WaitForChild("Rarities"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
@@ -56,7 +58,7 @@ function FusionPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenRequest
 	local infoLabel = Theme.MakeLabel(
 		"Info",
 		"Pick 3 unequipped pets of the SAME rarity to fuse!",
-		UDim2.new(1, 0, 0, 28),
+		UDim2.new(1, 0, 0, 22),
 		UDim2.fromOffset(0, 0),
 		Theme.FontBody,
 		Theme.TextPrimary,
@@ -65,8 +67,8 @@ function FusionPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenRequest
 
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Name = "Grid"
-	scroll.Size = UDim2.new(1, 0, 1, -96)
-	scroll.Position = UDim2.fromOffset(0, 34)
+	scroll.Size = UDim2.new(1, 0, 1, -72)
+	scroll.Position = UDim2.fromOffset(0, 26)
 	scroll.BackgroundTransparency = 1
 	scroll.BorderSizePixel = 0
 	scroll.ScrollBarThickness = 6
@@ -75,15 +77,16 @@ function FusionPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenRequest
 	scroll.Parent = content
 
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.fromOffset(135, 110)
-	grid.CellPadding = UDim2.fromOffset(8, 8)
+	grid.CellSize = UDim2.new(0.23, 0, 0, 102)
+	grid.CellPadding = UDim2.new(0.02, 0, 0, 8)
+	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = scroll
 
 	local fuseBtn = Theme.MakeButton(
 		"FuseBtn",
 		"Select 3 Pets",
-		UDim2.fromOffset(240, 48),
-		UDim2.new(0.5, -120, 1, -50),
+		UDim2.fromOffset(230, 38),
+		UDim2.new(0.5, -115, 1, -40),
 		Theme.AccentPurple,
 		content,
 		function()
@@ -134,6 +137,12 @@ function FusionPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenRequest
 				local rarity = Rarities.Get(info.Rarity)
 				local selIdx = isSelected(item.Uid)
 
+				local mutInfo = MutationData.Get(item.Mutation)
+				local borderColor = if selIdx
+					then Theme.AccentGold
+					elseif mutInfo then mutInfo.Color
+					else rarity.Color
+
 				local card = Instance.new("TextButton")
 				card.Name = item.Uid
 				card.LayoutOrder = idx
@@ -141,12 +150,21 @@ function FusionPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenRequest
 				card.BorderSizePixel = 0
 				card.Text = ""
 				Theme.AddCorner(card, 10)
-				Theme.AddStroke(card, if selIdx then Theme.AccentGold else rarity.Color, if selIdx then 3 else 2)
+				Theme.AddStroke(card, borderColor, if selIdx then 3 else 2)
 				card.Parent = scroll
 
-				Theme.MakeLabel("Emoji", info.Emoji, UDim2.fromScale(1, 0.42), UDim2.fromScale(0, 0.05), Theme.FontTitle, Theme.TextPrimary, card)
-				Theme.MakeLabel("Name", info.DisplayName, UDim2.fromScale(0.92, 0.24), UDim2.fromScale(0.04, 0.48), Theme.FontTitle, rarity.Color, card)
-				Theme.MakeLabel("Rarity", if selIdx then `SELECTED #{selIdx}` else info.Rarity, UDim2.fromScale(0.92, 0.20), UDim2.fromScale(0.04, 0.74), Theme.FontBody, if selIdx then Theme.AccentGold else Theme.TextMuted, card)
+				-- 3D Pet Viewport Preview (shows real 3D pet model instead of 2D emoji!)
+				local vpHolder = Instance.new("Frame")
+				vpHolder.Name = "ViewportHolder"
+				vpHolder.Size = UDim2.fromScale(0.86, 0.56)
+				vpHolder.Position = UDim2.fromScale(0.07, 0.02)
+				vpHolder.BackgroundTransparency = 1
+				vpHolder.Parent = card
+				PetVisuals.MountViewport(vpHolder, item.PetId, item.Mutation, UDim2.fromScale(1, 1), UDim2.fromScale(0, 0))
+
+				local prefix = if mutInfo then `[{mutInfo.Name}] ` else ""
+				Theme.MakeLabel("Name", `{prefix}{info.DisplayName}`, UDim2.fromScale(0.92, 0.21), UDim2.fromScale(0.04, 0.58), Theme.FontTitle, if mutInfo then mutInfo.Color else rarity.Color, card)
+				Theme.MakeLabel("Rarity", if selIdx then `✅ SELECTED #{selIdx}` else info.Rarity, UDim2.fromScale(0.92, 0.18), UDim2.fromScale(0.04, 0.79), Theme.FontBody, if selIdx then Theme.AccentGold else Theme.TextMuted, card)
 
 				card.Activated:Connect(function()
 					SoundController.Play("UiClick")
@@ -172,9 +190,9 @@ function FusionPanel.Init(screenGui: ScreenGui, onClose: () -> (), onOpenRequest
 			local rule = FusionData.GetRule(chosenRarity)
 			if rule then
 				local pct = math.floor(rule.SuccessChance * 100 + 0.5)
-				infoLabel.Text = `{chosenRarity} ➔ {rule.NextRarity}  |  Chance: {pct}%  |  Cost: $${NumberFormat.Short(rule.Cost)}`
+				infoLabel.Text = `{chosenRarity} ➔ {rule.NextRarity}  |  Chance: {pct}%  |  Cost: ${NumberFormat.Short(rule.Cost)}`
 				fuseBtn.Text = if #selectedUids == FusionData.FuseCount
-					then `⚗️ FUSE ($${NumberFormat.Short(rule.Cost)})`
+					then `⚗️ FUSE (${NumberFormat.Short(rule.Cost)})`
 					else `Selected {#selectedUids}/{FusionData.FuseCount}`
 			end
 		else

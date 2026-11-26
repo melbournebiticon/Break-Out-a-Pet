@@ -34,22 +34,25 @@ function DailyPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 	modalFrame = modal
 
 	local gridFrame = Instance.new("Frame")
-	gridFrame.Size = UDim2.new(1, 0, 1, -66)
+	gridFrame.Size = UDim2.new(1, 0, 1, -48)
+	gridFrame.Position = UDim2.fromOffset(0, 0)
 	gridFrame.BackgroundTransparency = 1
 	gridFrame.Parent = content
 
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.fromOffset(128, 95)
-	grid.CellPadding = UDim2.fromOffset(10, 10)
+	-- Scale-based 4x2 grid so all 7 Day Cards always fit cleanly ABOVE the Claim button on both CP and PC!
+	grid.CellSize = UDim2.new(0.23, 0, 0.45, 0)
+	grid.CellPadding = UDim2.new(0.02, 0, 0.06, 0)
 	grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	grid.VerticalAlignment = Enum.VerticalAlignment.Top
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = gridFrame
 
 	local claimBtn = Theme.MakeButton(
 		"ClaimBtn",
 		"🎁 Claim Today's Reward!",
-		UDim2.fromOffset(250, 48),
-		UDim2.new(0.5, -125, 1, -50),
+		UDim2.fromOffset(250, 38),
+		UDim2.new(0.5, -125, 1, -39),
 		Theme.AccentGreen,
 		content,
 		function()
