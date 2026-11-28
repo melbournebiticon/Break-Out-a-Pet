@@ -2,6 +2,7 @@
 -- ShopService.luau (SERVER)
 -- Handles "ShopRequest" RemoteFunction for BuySpeed, BuySlot, and SellPet.
 
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -12,7 +13,9 @@ local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
 local DataService = require(script.Parent:WaitForChild("DataService"))
 local EconomyService = require(script.Parent:WaitForChild("EconomyService"))
 local InventoryService = require(script.Parent:WaitForChild("InventoryService"))
+local BaseService = require(script.Parent:WaitForChild("BaseService"))
 local StatsService = require(script.Parent:WaitForChild("StatsService"))
+local ClientSyncService = require(script.Parent:WaitForChild("ClientSyncService"))
 
 export type ShopResponse = {
 	Ok: boolean,
@@ -20,6 +23,40 @@ export type ShopResponse = {
 }
 
 local ShopService = {}
+local feedStationSetup: { [Instance]: boolean } = {}
+
+function ShopService.FeedPetsStreetFood(player: Player, foodId: string): ShopResponse
+	if not DataService.IsLoaded(player) then
+		return { Ok = false, Message = "Data is still loading." }
+	end
+	local food = ShopData.GetStreetFood(foodId) or ShopData.GetStreetFood("fishball")
+	if not food then
+		return { Ok = false, Message = "Unknown street food." }
+	end
+	if not EconomyService.TrySpend(player, food.Cost) then
+		return {
+			Ok = false,
+			Message = `Need $${NumberFormat.Short(food.Cost)} to buy {food.Emoji} {food.DisplayName}!`,
+		}
+	end
+
+	local now = workspace:GetServerTimeNow()
+	local curAttr = player:GetAttribute("PetBusogUntil")
+	local curUntil = if typeof(curAttr) == "number" and curAttr > now then curAttr else now
+	-- Stack up to 30 minutes max
+	local newUntil = math.min(now + 1800, curUntil + food.DurationSeconds)
+	player:SetAttribute("PetBusogUntil", newUntil)
+	player:SetAttribute("LastStreetFood", `{food.Emoji} {food.DisplayName}`)
+
+	BaseService.Refresh(player)
+	Remotes.GetEvent("PetFedVfx"):FireClient(player, food.Id, food.Emoji, food.DisplayName)
+
+	local mins = math.ceil((newUntil - now) / 60)
+	return {
+		Ok = true,
+		Message = `{food.Emoji} Fed pets {food.DisplayName}! BUSOG MODE active (+20% $/s for {mins}m)!`,
+	}
+end
 
 function ShopService.HandleRequest(player: Player, action: any, arg: any): ShopResponse
 	if not DataService.IsLoaded(player) then
@@ -97,12 +134,46 @@ function ShopService.HandleRequest(player: Player, action: any, arg: any): ShopR
 		end
 		EconomyService.AddMoney(player, totalEarned)
 		return { Ok = true, Message = `💰 Sold {soldCount} pet(s) for $${NumberFormat.Short(totalEarned)}!` }
+	elseif action == "BuyStreetFood" then
+		local foodId = if typeof(arg) == "string" and arg ~= "" then arg else "fishball"
+		return ShopService.FeedPetsStreetFood(player, foodId)
 	end
 
 	return { Ok = false, Message = "Unknown shop action." }
 end
 
+local function setupFeedStationPrompt(instance: Instance)
+	if feedStationSetup[instance] or not instance:IsA("BasePart") then
+		return
+	end
+	feedStationSetup[instance] = true
+	instance.Destroying:Connect(function()
+		feedStationSetup[instance] = nil
+	end)
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "FeedPetsPrompt"
+	prompt.ActionText = "Pakainin ang Pets ($500 Fishball)"
+	prompt.ObjectText = "🍡 Alaga & Pakain (10m Busog +20% $/s)"
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Triggered:Connect(function(player: Player)
+		if not RateLimiter.Check(player, "FeedStationPrompt", 0.35) then
+			return
+		end
+		local res = ShopService.FeedPetsStreetFood(player, "fishball")
+		ClientSyncService.Notify(
+			player,
+			res.Message,
+			if res.Ok then Color3.fromRGB(110, 255, 130) else Color3.fromRGB(255, 95, 95)
+		)
+	end)
+	prompt.Parent = instance
+end
+
 function ShopService.Init()
+	Remotes.GetEvent("PetFedVfx")
 	local fn = Remotes.GetFunction("ShopRequest")
 	fn.OnServerInvoke = function(player: Player, action: any, arg: any): ShopResponse
 		if not RateLimiter.Check(player, "ShopRequest", 0.2) then
@@ -110,6 +181,11 @@ function ShopService.Init()
 		end
 		return ShopService.HandleRequest(player, action, arg)
 	end
+
+	for _, inst in CollectionService:GetTagged("PlotFeedStation") do
+		task.spawn(setupFeedStationPrompt, inst)
+	end
+	CollectionService:GetInstanceAddedSignal("PlotFeedStation"):Connect(setupFeedStationPrompt)
 end
 
 return ShopService

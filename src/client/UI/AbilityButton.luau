@@ -10,6 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local PetData = require(Shared:WaitForChild("PetData"))
 local PetVisuals = require(Shared:WaitForChild("PetVisuals"))
+local PamaloConfig = require(Shared:WaitForChild("PamaloConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local Theme = require(script.Parent:WaitForChild("Theme"))
 local Toasts = require(script.Parent:WaitForChild("Toasts"))
@@ -20,6 +21,7 @@ local AbilityButton = {}
 function AbilityButton.Init(screenGui: ScreenGui)
 	local player = Players.LocalPlayer
 	local useAbilityEvent = Remotes.GetEvent("UseAbility")
+	local sipatEvent = Remotes.GetEvent("PamaloSipat")
 
 	local btn = Instance.new("TextButton")
 	btn.Name = "AbilityButton"
@@ -149,11 +151,212 @@ function AbilityButton.Init(screenGui: ScreenGui)
 	player:GetAttributeChangedSignal("EquippedPetId"):Connect(refreshEquipped)
 	refreshEquipped()
 
+	-- SECONDARY RANGED TSINELAS THROW ("SIPAT") ACTION BUTTON + RIGHT-CLICK / R KEYBIND
+	local sipatBtn = Instance.new("TextButton")
+	sipatBtn.Name = "SipatThrowButton"
+	sipatBtn.Size = UDim2.fromOffset(186, 44)
+	sipatBtn.Position = UDim2.new(1, -14, 1, -74)
+	sipatBtn.AnchorPoint = Vector2.new(1, 1)
+	sipatBtn.BackgroundColor3 = Color3.fromRGB(28, 34, 48)
+	sipatBtn.BackgroundTransparency = 0.08
+	sipatBtn.BorderSizePixel = 0
+	sipatBtn.Text = ""
+	sipatBtn.Visible = false
+	Theme.AddCorner(sipatBtn, 12)
+	local sipatStroke = Theme.AddStroke(sipatBtn, Theme.AccentBlue, 2.2)
+	sipatBtn.Parent = screenGui
+
+	local function updateSipatLayout(isCompact: boolean)
+		sipatBtn.AnchorPoint = Vector2.new(1, 1)
+		local skillOffset = if btn.Visible then (if isCompact then 44 else 60) else 0
+		if isCompact then
+			sipatBtn.Position = UDim2.new(1, -10, 1, -108 - skillOffset)
+		else
+			sipatBtn.Position = UDim2.new(1, -14, 1, -14 - skillOffset)
+		end
+	end
+
+	Theme.BindResponsiveScale(sipatBtn, 0.72, updateSipatLayout)
+	btn:GetPropertyChangedSignal("Visible"):Connect(function()
+		updateSipatLayout(Theme.IsCompactScreen())
+	end)
+
+	local sipatIconHolder = Instance.new("Frame")
+	sipatIconHolder.Name = "IconHolder"
+	sipatIconHolder.Size = UDim2.fromOffset(38, 38)
+	sipatIconHolder.Position = UDim2.fromOffset(5, 3)
+	sipatIconHolder.BackgroundTransparency = 1
+	sipatIconHolder.Parent = sipatBtn
+
+	local sipatTitleLbl = Theme.MakeLabel(
+		"Title",
+		"🩴 SIPAT THROW [R / RMB]",
+		UDim2.new(1, -50, 0, 18),
+		UDim2.fromOffset(46, 4),
+		Theme.FontTitle,
+		Theme.AccentGold,
+		sipatBtn
+	)
+	sipatTitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+	local sipatDescLbl = Theme.MakeLabel(
+		"Desc",
+		"Boomerang Tsinelas stuns Bantay!",
+		UDim2.new(1, -50, 0, 18),
+		UDim2.fromOffset(46, 22),
+		Theme.FontBody,
+		Color3.fromRGB(215, 228, 245),
+		sipatBtn
+	)
+	sipatDescLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+	local currentPamaloId = ""
+	local rightMouseDownAt = 0
+	local rightMouseDownPos = Vector2.zero
+
+	local function getActiveTsinelasId(): string?
+		local attrId = player:GetAttribute("EquippedPamaloId")
+		if typeof(attrId) == "string" and PamaloConfig.GetSipat(attrId) ~= nil then
+			return attrId
+		end
+		local character = player.Character
+		local backpack = player:FindFirstChildOfClass("Backpack")
+		for _, container in { character, backpack } do
+			if container then
+				for _, child in container:GetChildren() do
+					if child:IsA("Tool") and child:GetAttribute("IsPamalo") == true then
+						local pid = tostring(child:GetAttribute("PamaloId") or "")
+						if PamaloConfig.GetSipat(pid) ~= nil then
+							return pid
+						end
+					end
+				end
+			end
+		end
+		return nil
+	end
+
+	local function isHoldingTsinelasToolInHand(): boolean
+		local character = player.Character
+		if not character then
+			return false
+		end
+		for _, child in character:GetChildren() do
+			if child:IsA("Tool") and child:GetAttribute("IsPamalo") == true then
+				local pid = tostring(child:GetAttribute("PamaloId") or "")
+				if PamaloConfig.GetSipat(pid) ~= nil then
+					return true
+				end
+			end
+		end
+		return false
+	end
+
+	local function computeAimDirection(): Vector3
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local cam = workspace.CurrentCamera
+		if root and root:IsA("BasePart") then
+			if cam then
+				local camLook = Vector3.new(cam.CFrame.LookVector.X, 0, cam.CFrame.LookVector.Z)
+				if camLook.Magnitude > 0.05 then
+					return camLook.Unit
+				end
+			end
+			local flat = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+			if flat.Magnitude > 0.05 then
+				return flat.Unit
+			end
+		end
+		return Vector3.new(0, 0, -1)
+	end
+
+	local function triggerSipat()
+		local tsinelasId = getActiveTsinelasId()
+		if not tsinelasId then
+			return
+		end
+		local readyAtAttr = player:GetAttribute("SipatReadyAt")
+		local readyAt = if typeof(readyAtAttr) == "number" then readyAtAttr else 0
+		if workspace:GetServerTimeNow() < readyAt then
+			return
+		end
+		SoundController.Play("SipatThrow")
+		sipatEvent:FireServer(computeAimDirection())
+	end
+
+	sipatBtn.Activated:Connect(triggerSipat)
+
+	UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			rightMouseDownAt = os.clock()
+			rightMouseDownPos = Vector2.new(input.Position.X, input.Position.Y)
+		end
+		if gameProcessed then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.R then
+			triggerSipat()
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input: InputObject, _gameProcessed: boolean)
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			local heldSec = os.clock() - rightMouseDownAt
+			local movedDist = (Vector2.new(input.Position.X, input.Position.Y) - rightMouseDownPos).Magnitude
+			-- Quick right-click (not camera pan drag) while holding Tsinelas throws Sipat!
+			if heldSec <= 0.25 and movedDist <= 8 and isHoldingTsinelasToolInHand() then
+				triggerSipat()
+			end
+		end
+	end)
+
+	local function refreshSipatButton()
+		local tsinelasId = getActiveTsinelasId()
+		if not tsinelasId then
+			sipatBtn.Visible = false
+			currentPamaloId = ""
+			return
+		end
+		sipatBtn.Visible = true
+		updateSipatLayout(Theme.IsCompactScreen())
+		if tsinelasId ~= currentPamaloId then
+			currentPamaloId = tsinelasId
+			for _, child in sipatIconHolder:GetChildren() do
+				child:Destroy()
+			end
+			PamaloConfig.MountViewport(sipatIconHolder, tsinelasId, UDim2.fromScale(1, 1), UDim2.fromScale(0, 0))
+		end
+	end
+
+	player:GetAttributeChangedSignal("EquippedPamaloId"):Connect(refreshSipatButton)
+	task.defer(refreshSipatButton)
+
 	RunService.Heartbeat:Connect(function()
+		refreshSipatButton()
+		local now = workspace:GetServerTimeNow()
+
+		if sipatBtn.Visible then
+			local sipatReadyAttr = player:GetAttribute("SipatReadyAt")
+			local sipatReadyAt = if typeof(sipatReadyAttr) == "number" then sipatReadyAttr else 0
+			local info = PamaloConfig.Get(currentPamaloId)
+			local isGold = currentPamaloId == "gintong_tsinelas"
+			local baseColor = if isGold then Theme.AccentGold else Theme.AccentBlue
+			if now < sipatReadyAt then
+				sipatTitleLbl.Text = `⏳ Sipat ({math.ceil(sipatReadyAt - now)}s)`
+				sipatTitleLbl.TextColor3 = Theme.TextMuted
+				sipatStroke.Color = Theme.TextMuted
+			else
+				local shortName = if info and isGold then "Gintong Sipat" else "Sipat Tsinelas"
+				sipatTitleLbl.Text = `🩴 {shortName} [R / RMB]`
+				sipatTitleLbl.TextColor3 = baseColor
+				sipatStroke.Color = baseColor
+			end
+		end
+
 		if not btn.Visible or isPassive then
 			return
 		end
-		local now = workspace:GetServerTimeNow()
 		local activeUntilAttr = player:GetAttribute("AbilityActiveUntil")
 		local readyAtAttr = player:GetAttribute("AbilityReadyAt")
 		local activeUntil = if typeof(activeUntilAttr) == "number" then activeUntilAttr else 0

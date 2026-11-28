@@ -14,6 +14,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local EnemyData = require(Shared:WaitForChild("EnemyData"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
 local CageService = require(script.Parent:WaitForChild("CageService"))
 
 type EnemyState = "Sleep" | "Waking" | "Chase" | "Stunned"
@@ -636,7 +637,7 @@ local function isPlayerCarryingAnything(player: Player): (boolean, Model?)
 end
 
 local function isInsidePrison(pos: Vector3): boolean
-	return pos.Z <= Config.SafeZoneZ and math.abs(pos.X) <= 41
+	return pos.Z <= Config.SafeZoneZ and math.abs(pos.X) <= 44.5
 end
 
 local function isPositionInZone(pos: Vector3, zone: string): boolean
@@ -714,7 +715,10 @@ local function findTarget(enemy: Enemy): Player?
 				local targetRoot = getPlayerRoot(player)
 				if targetRoot and isPlayerEligibleForZoneEnemy(player, targetRoot, enemy.Zone) then
 					local dist = (targetRoot.Position - enemy.Root.Position).Magnitude
-					if dist <= sightRange and dist < bestDist then
+					local cageZone = player:GetAttribute("CarriedCageZone")
+					local stoleFromThisZone = (typeof(cageZone) == "string" and cageZone == enemy.Zone)
+					-- If the player stole a cage from this enemy's zone, keep targeting them even if they outrun SightRange until they reach the Safe Zone!
+					if (stoleFromThisZone or dist <= sightRange) and dist < bestDist then
 						bestDist = dist
 						bestPlayer = player
 					end
@@ -778,6 +782,7 @@ end
 local function enterSleep(enemy: Enemy, now: number)
 	local wasChase = enemy.State == "Chase"
 	enemy.State = "Sleep"
+	enemy.Model:SetAttribute("EnemyState", "Sleep")
 	enemy.Target = nil
 	enemy.Waypoints = {}
 	enemy.WaypointIndex = 1
@@ -797,8 +802,9 @@ end
 
 local function enterWaking(enemy: Enemy, target: Player, now: number)
 	enemy.State = "Waking"
+	enemy.Model:SetAttribute("EnemyState", "Waking")
 	enemy.Target = target
-	enemy.WakingEndsAt = now + 0.65
+	enemy.WakingEndsAt = now + 0.25
 	enemy.Waypoints = {}
 	enemy.WaypointIndex = 1
 	enemy.Humanoid.WalkSpeed = 0
@@ -807,10 +813,12 @@ local function enterWaking(enemy: Enemy, target: Player, now: number)
 		enemy.NameLabel.Text = `❗ NAGISING SI {enemy.DisplayTitle}!`
 		enemy.NameLabel.TextColor3 = Color3.fromRGB(255, 225, 65)
 	end
+	Remotes.GetEvent("EnemyVfx"):FireAllClients("Alert", enemy.Model, enemy.DisplayTitle)
 end
 
 local function enterChase(enemy: Enemy, target: Player, now: number)
 	enemy.State = "Chase"
+	enemy.Model:SetAttribute("EnemyState", "Chase")
 	enemy.Target = target
 	enemy.ChaseStartedAt = now
 	enemy.LastSawTargetAt = now
@@ -819,6 +827,8 @@ local function enterChase(enemy: Enemy, target: Player, now: number)
 	enemy.Waypoints = {}
 	enemy.WaypointIndex = 1
 	enemy.PatrolTargetPos = nil
+	enemy.LastProgressPos = enemy.Root.Position
+	enemy.LastProgressAt = now
 	enemy.Humanoid.WalkSpeed = enemy.BaseChaseSpeed
 	if enemy.NameLabel then
 		enemy.NameLabel.Text = `😡 {enemy.DisplayTitle}`
@@ -827,13 +837,18 @@ local function enterChase(enemy: Enemy, target: Player, now: number)
 	updateBeingChasedAttributes()
 end
 
-local function enterStunned(enemy: Enemy, now: number)
+local function enterStunned(enemy: Enemy, now: number, customStunSeconds: number?)
+	local stunDur = if typeof(customStunSeconds) == "number" and customStunSeconds > 0
+		then customStunSeconds
+		else enemy.Stats.StunSeconds
 	enemy.State = "Stunned"
+	enemy.Model:SetAttribute("EnemyState", "Stunned")
+	enemy.Model:SetAttribute("StunDuration", stunDur)
 	enemy.Target = nil
 	enemy.Waypoints = {}
 	enemy.WaypointIndex = 1
 	enemy.LastPathTargetPos = nil
-	enemy.StunEndsAt = now + enemy.Stats.StunSeconds
+	enemy.StunEndsAt = now + stunDur
 	enemy.Humanoid.WalkSpeed = 0
 	enemy.Humanoid:MoveTo(enemy.Root.Position)
 	if enemy.NameLabel then
@@ -841,6 +856,7 @@ local function enterStunned(enemy: Enemy, now: number)
 		enemy.NameLabel.TextColor3 = enemy.TagColor
 	end
 	updateBeingChasedAttributes()
+	Remotes.GetEvent("EnemyVfx"):FireAllClients("Stun", enemy.Model, stunDur)
 end
 
 function EnemyService.FreezeNearby(position: Vector3, radius: number, durationSeconds: number): number
@@ -858,11 +874,12 @@ function EnemyService.FreezeNearby(position: Vector3, radius: number, durationSe
 end
 
 -- Slaps/stuns any Guard or Dog within the attacker's Pamalo reach & front cone!
+-- Stunned guards stay in place while knocked down, and immediately resume chasing once they get back up!
 function EnemyService.SlapEnemiesInCone(
 	attackerPos: Vector3,
 	lookVector: Vector3,
 	reach: number,
-	knockback: number,
+	_knockback: number,
 	stunSeconds: number,
 	isAoE: boolean
 ): { BasePart }
@@ -878,10 +895,10 @@ function EnemyService.SlapEnemiesInCone(
 				local dir = if dist > 0.05 then flatDelta.Unit else lookVector
 				local dot = dir:Dot(Vector3.new(lookVector.X, 0, lookVector.Z).Unit)
 				if dist <= 3.5 or dot >= (if isAoE then 0.15 else 0.35) then
-					enemy.FrozenUntil = math.max(enemy.FrozenUntil, now + stunSeconds)
-					enterStunned(enemy, now)
+					enemy.FrozenUntil = 0
+					enterStunned(enemy, now, stunSeconds)
 					enemy.StunEndsAt = math.max(enemy.StunEndsAt, now + stunSeconds)
-					enemy.Root.AssemblyLinearVelocity = dir * knockback + Vector3.new(0, 14, 0)
+					enemy.Root.AssemblyLinearVelocity = Vector3.zero
 					table.insert(hitRoots, enemy.Head)
 					if not isAoE then
 						break
@@ -892,6 +909,99 @@ function EnemyService.SlapEnemiesInCone(
 	end
 
 	return hitRoots
+end
+
+-- Stuns the closest Guard or Dog hit by a ranged "Sipat" Tsinelas projectile in place!
+function EnemyService.SlapNearestEnemyAtPoint(
+	point: Vector3,
+	hitRadius: number,
+	_knockback: number,
+	stunSeconds: number,
+	_hitDir: Vector3
+): BasePart?
+	local now = os.clock()
+	local bestEnemy: Enemy? = nil
+	local bestDist = hitRadius + 1.8
+
+	for _, enemy in enemies do
+		if enemy.Root.Parent then
+			local delta = enemy.Root.Position - point
+			local flatDist = Vector3.new(delta.X, 0, delta.Z).Magnitude
+			local dy = math.abs(delta.Y)
+			if flatDist <= bestDist and dy <= 6.5 then
+				bestDist = flatDist
+				bestEnemy = enemy
+			end
+		end
+	end
+
+	if bestEnemy then
+		bestEnemy.FrozenUntil = 0
+		enterStunned(bestEnemy, now, stunSeconds)
+		bestEnemy.StunEndsAt = math.max(bestEnemy.StunEndsAt, now + stunSeconds)
+		bestEnemy.Root.AssemblyLinearVelocity = Vector3.zero
+		return bestEnemy.Head
+	end
+
+	return nil
+end
+
+local function tripCaughtPlayer(target: Player, enemyPos: Vector3)
+	local character = target.Character
+	local hum = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not hum or not root or not root:IsA("BasePart") or hum.Health <= 0 then
+		return
+	end
+
+	local away = Vector3.new(root.Position.X - enemyPos.X, 0, root.Position.Z - enemyPos.Z)
+	local forwardDir = if away.Magnitude > 0.05 then away.Unit else root.CFrame.LookVector
+	forwardDir = Vector3.new(forwardDir.X, 0, forwardDir.Z)
+	if forwardDir.Magnitude < 0.05 then
+		forwardDir = Vector3.new(0, 0, 1)
+	else
+		forwardDir = forwardDir.Unit
+	end
+
+	-- Popup "💥 NADAPA!" above the player
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "TripPopup"
+	gui.Size = UDim2.fromScale(4.0, 1.3)
+	gui.StudsOffset = Vector3.new(0, 3.0, 0)
+	gui.MaxDistance = 55
+	gui.AlwaysOnTop = true
+	gui.Adornee = root
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.fromScale(1, 1)
+	lbl.BackgroundTransparency = 1
+	lbl.Font = Enum.Font.FredokaOne
+	lbl.TextScaled = true
+	lbl.TextColor3 = Color3.fromRGB(255, 110, 80)
+	lbl.TextStrokeColor3 = Color3.fromRGB(20, 15, 15)
+	lbl.TextStrokeTransparency = 0
+	lbl.Text = "💥 NADAPA!"
+	lbl.Parent = gui
+	gui.Parent = root
+
+	task.delay(0.95, function()
+		if gui.Parent then
+			gui:Destroy()
+		end
+	end)
+
+	-- Trip face-down ("madadapa") for 1.1s
+	hum.PlatformStand = true
+	local basePos = root.Position + Vector3.new(0, 0.45, 0)
+	root.CFrame = CFrame.new(basePos, basePos + forwardDir) * CFrame.Angles(math.rad(-82), 0, 0)
+	root.AssemblyLinearVelocity = forwardDir * 16 + Vector3.new(0, 8, 0)
+
+	task.delay(1.1, function()
+		if hum.Parent and root.Parent then
+			hum.PlatformStand = false
+			root.CFrame = CFrame.new(root.Position + Vector3.new(0, 2.4, 0), root.Position + Vector3.new(0, 2.4, 0) + forwardDir)
+		end
+	end)
 end
 
 -- Pathfinding ---------------------------------------------------------------
@@ -969,9 +1079,15 @@ local function stepEnemy(enemy: Enemy, now: number)
 	end
 
 	if enemy.State == "Stunned" then
+		enemy.Humanoid.WalkSpeed = 0
 		if now >= enemy.StunEndsAt then
-			enemy.ReChaseAvailableAt = now + enemy.Stats.ReChaseCooldownSeconds
-			enterSleep(enemy, now)
+			enemy.ReChaseAvailableAt = 0
+			local resumeTarget = findTarget(enemy)
+			if resumeTarget then
+				enterChase(enemy, resumeTarget, now)
+			else
+				enterSleep(enemy, now)
+			end
 		end
 		return
 	end
@@ -1028,10 +1144,15 @@ local function stepEnemy(enemy: Enemy, now: number)
 
 	local dist = (targetRoot.Position - enemy.Root.Position).Magnitude
 	if dist <= enemy.Stats.CatchDistance then
+		local didCatch = false
 		if CageService.IsCarrying(target) then
-			CageService.DropCage(target, "caught", enemy.DisplayTitle)
+			didCatch = CageService.DropCage(target, "caught", enemy.DisplayTitle)
 		elseif extraCatchHandler then
 			extraCatchHandler(target)
+			didCatch = true
+		end
+		if didCatch then
+			tripCaughtPlayer(target, enemy.Root.Position)
 		end
 		enterStunned(enemy, now)
 		return
@@ -1063,15 +1184,17 @@ local function stepEnemy(enemy: Enemy, now: number)
 	end
 
 	local targetPos = targetRoot.Position
-	if now >= enemy.NextPathRecomputeAt then
-		enemy.NextPathRecomputeAt = now + EnemyData.PathRecomputeSeconds
-		local lastPos = enemy.LastPathTargetPos
-		if not lastPos or (targetPos - lastPos).Magnitude > EnemyData.TargetMoveThreshold or #enemy.Waypoints == 0 then
-			recomputeChasePath(enemy, targetPos)
-		end
-	end
+	-- Direct relentless pursuit along the corridor (prevents PathfindingService waypoint lag from making fast guards turn back toward their zone when outrun!)
+	enemy.Humanoid:MoveTo(targetPos)
 
-	followWaypoints(enemy, targetPos)
+	if (enemy.Root.Position - enemy.LastProgressPos).Magnitude >= 1.5 then
+		enemy.LastProgressPos = enemy.Root.Position
+		enemy.LastProgressAt = now
+	elseif (now - enemy.LastProgressAt) >= 0.55 then
+		enemy.LastProgressPos = enemy.Root.Position
+		enemy.LastProgressAt = now
+		enemy.Humanoid.Jump = true
+	end
 end
 
 -- Spawning ------------------------------------------------------------------
@@ -1084,6 +1207,9 @@ function EnemyService.SpawnTemporaryEnemy(enemyType: string, zone: string, cfram
 
 	local model, humanoid, root, head = createEnemyRig(enemyType, zone, stats)
 	model.Name = `{enemyType}_{zone}`
+	model:SetAttribute("EnemyType", enemyType)
+	model:SetAttribute("Zone", zone)
+	CollectionService:AddTag(model, "GuardEnemy")
 	model:PivotTo(cframe)
 	model.Parent = getEnemiesFolder()
 
@@ -1180,6 +1306,7 @@ local function setupSpawn(instance: Instance)
 end
 
 function EnemyService.Init()
+	Remotes.GetEvent("EnemyVfx")
 	local folder = getEnemiesFolder()
 	folder:ClearAllChildren()
 

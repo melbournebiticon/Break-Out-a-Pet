@@ -52,6 +52,15 @@ local Mutations: { [string]: MutationInfo } = {
 		Color = Color3.fromRGB(120, 245, 255),
 		Material = Enum.Material.Neon,
 	},
+	Fiesta = {
+		Name = "Fiesta",
+		IncomeMultiplier = 6,
+		MinScale = 1.2,
+		MaxScale = 2.9,
+		Chance = 0.85,
+		Color = Color3.fromRGB(255, 85, 195),
+		Material = Enum.Material.Neon,
+	},
 	Semi = {
 		Name = "Semi",
 		IncomeMultiplier = 12,
@@ -116,6 +125,7 @@ local Order: { string } = {
 	"Huge",
 	"Semi",
 	"Celestial",
+	"Fiesta",
 	"Shadow",
 	"Neon",
 	"Golden",

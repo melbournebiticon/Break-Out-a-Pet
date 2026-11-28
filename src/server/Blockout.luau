@@ -322,6 +322,243 @@ local function buildDecorativeTree(parent: Instance, pos: Vector3)
 	makePart("Canopy3", Vector3.new(3.8, 2.2, 3.8), pos + Vector3.new(0, 15.2, 0), Color3.fromRGB(120, 232, 92), tree, Enum.Material.Grass)
 end
 
+-- 🚌 BARANGAY KANTO PROPS: Pinoy Jeepney, Tricycle, Sari-Sari Stalls & Glowing Street Parol Lamps!
+local function buildPinoyJeepney(parent: Instance, centerPos: Vector3, yawDeg: number)
+	local jeep = Instance.new("Model")
+	jeep.Name = "PinoyJeepney"
+	jeep.Parent = parent
+
+	local baseCF = CFrame.new(centerPos) * CFrame.Angles(0, math.rad(yawDeg), 0)
+	local function addPart(name: string, size: Vector3, localCF: CFrame, color: Color3, mat: Enum.Material): Part
+		local p = makePart(name, size, centerPos, color, jeep, mat)
+		p.CFrame = baseCF * localCF
+		return p
+	end
+
+	-- Chassis, Chrome Hood, Festive Yellow/Red/Blue Body & Silver Roof
+	addPart("Chassis", Vector3.new(7.4, 0.8, 17.5), CFrame.new(0, 1.4, 0), Color3.fromRGB(35, 38, 46), Enum.Material.Metal)
+	addPart("ChromeHood", Vector3.new(6.4, 2.8, 4.6), CFrame.new(0, 3.1, -6.2), Color3.fromRGB(215, 222, 232), Enum.Material.Metal)
+	addPart("FrontGrille", Vector3.new(4.8, 1.8, 0.3), CFrame.new(0, 2.9, -8.55), Color3.fromRGB(255, 215, 45), Enum.Material.Neon)
+	addPart("HeadlightL", Vector3.new(0.85, 0.85, 0.35), CFrame.new(-2.4, 3.2, -8.55), Color3.fromRGB(255, 250, 190), Enum.Material.Neon)
+	addPart("HeadlightR", Vector3.new(0.85, 0.85, 0.35), CFrame.new(2.4, 3.2, -8.55), Color3.fromRGB(255, 250, 190), Enum.Material.Neon)
+
+	addPart("CabinBody", Vector3.new(7.2, 3.4, 12.6), CFrame.new(0, 3.3, 2.2), Color3.fromRGB(235, 55, 45), Enum.Material.SmoothPlastic)
+	addPart("SideStripeL", Vector3.new(0.2, 1.1, 12.4), CFrame.new(-3.65, 3.4, 2.2), Color3.fromRGB(255, 210, 40), Enum.Material.Neon)
+	addPart("SideStripeR", Vector3.new(0.2, 1.1, 12.4), CFrame.new(3.65, 3.4, 2.2), Color3.fromRGB(255, 210, 40), Enum.Material.Neon)
+	addPart("BlueTrimL", Vector3.new(0.2, 0.7, 12.4), CFrame.new(-3.65, 2.3, 2.2), Color3.fromRGB(35, 145, 245), Enum.Material.SmoothPlastic)
+	addPart("BlueTrimR", Vector3.new(0.2, 0.7, 12.4), CFrame.new(3.65, 2.3, 2.2), Color3.fromRGB(35, 145, 245), Enum.Material.SmoothPlastic)
+
+	-- Windshield, Side Pillars & Roof with Route Signboard
+	addPart("Windshield", Vector3.new(6.6, 2.2, 0.35), CFrame.new(0, 5.6, -3.8) * CFrame.Angles(math.rad(-14), 0, 0), Color3.fromRGB(130, 215, 255), Enum.Material.Glass)
+	for _, zOff in { -3.5, 0.5, 4.5, 8.2 } do
+		addPart("PillarL", Vector3.new(0.35, 2.6, 0.35), CFrame.new(-3.4, 6.1, zOff), Color3.fromRGB(215, 220, 228), Enum.Material.Metal)
+		addPart("PillarR", Vector3.new(0.35, 2.6, 0.35), CFrame.new(3.4, 6.1, zOff), Color3.fromRGB(215, 220, 228), Enum.Material.Metal)
+	end
+	addPart("JeepRoof", Vector3.new(7.4, 0.45, 13.8), CFrame.new(0, 7.5, 2.0), Color3.fromRGB(238, 242, 248), Enum.Material.Metal)
+
+	local signPart = addPart("RouteSign", Vector3.new(5.6, 1.2, 0.35), CFrame.new(0, 8.3, -4.4), Color3.fromRGB(24, 28, 38), Enum.Material.Metal)
+	addSurfaceSign(signPart, Enum.NormalId.Front, "🚌 BARANGAY KANTO", "BYAHENG FIESTA PLAZA • LIBRE SAKAY!", Color3.fromRGB(255, 215, 45))
+
+	for _, wOff in {
+		Vector3.new(-3.6, 1.3, -5.8),
+		Vector3.new(3.6, 1.3, -5.8),
+		Vector3.new(-3.6, 1.3, 5.2),
+		Vector3.new(3.6, 1.3, 5.2),
+	} do
+		local wheel = addPart("Wheel", Vector3.new(1.1, 2.6, 2.6), CFrame.new(wOff), Color3.fromRGB(24, 26, 30), Enum.Material.SmoothPlastic)
+		wheel.Shape = Enum.PartType.Cylinder
+	end
+end
+
+local function buildPinoyTricycle(parent: Instance, centerPos: Vector3, yawDeg: number)
+	local trike = Instance.new("Model")
+	trike.Name = "PinoyTricycle"
+	trike.Parent = parent
+
+	local baseCF = CFrame.new(centerPos) * CFrame.Angles(0, math.rad(yawDeg), 0)
+	local function addPart(name: string, size: Vector3, localCF: CFrame, color: Color3, mat: Enum.Material): Part
+		local p = makePart(name, size, centerPos, color, trike, mat)
+		p.CFrame = baseCF * localCF
+		return p
+	end
+
+	-- Motorcycle Frame + Sidecar ("Toda #01")
+	addPart("MotoBody", Vector3.new(1.2, 2.2, 6.2), CFrame.new(-1.8, 2.1, 0), Color3.fromRGB(40, 44, 54), Enum.Material.Metal)
+	addPart("Handlebar", Vector3.new(2.8, 0.35, 0.35), CFrame.new(-1.8, 3.6, -2.0), Color3.fromRGB(210, 215, 225), Enum.Material.Metal)
+	addPart("Headlight", Vector3.new(0.75, 0.75, 0.35), CFrame.new(-1.8, 3.2, -2.9), Color3.fromRGB(255, 245, 175), Enum.Material.Neon)
+
+	addPart("SidecarCab", Vector3.new(3.2, 2.4, 5.4), CFrame.new(1.3, 2.2, 0.2), Color3.fromRGB(35, 155, 245), Enum.Material.Metal)
+	addPart("SidecarStripe", Vector3.new(3.3, 0.55, 5.5), CFrame.new(1.3, 2.3, 0.2), Color3.fromRGB(255, 210, 45), Enum.Material.Neon)
+	addPart("SidecarRoof", Vector3.new(5.4, 0.35, 6.2), CFrame.new(-0.2, 5.2, 0.2), Color3.fromRGB(225, 55, 45), Enum.Material.Fabric)
+	addPart("RoofSupportF", Vector3.new(0.25, 2.2, 0.25), CFrame.new(2.6, 4.1, -2.1), Color3.fromRGB(190, 195, 205), Enum.Material.Metal)
+	addPart("RoofSupportB", Vector3.new(0.25, 2.2, 0.25), CFrame.new(2.6, 4.1, 2.5), Color3.fromRGB(190, 195, 205), Enum.Material.Metal)
+end
+
+local function buildStreetParolLamp(parent: Instance, pos: Vector3)
+	local lamp = Instance.new("Model")
+	lamp.Name = "BarangayStreetLamp"
+	lamp.Parent = parent
+
+	makePart("Base", Vector3.new(1.6, 0.8, 1.6), pos + Vector3.new(0, 0.4, 0), Color3.fromRGB(58, 62, 74), lamp, Enum.Material.Slate)
+	makePart("Pole", Vector3.new(0.55, 11.5, 0.55), pos + Vector3.new(0, 6.2, 0), Color3.fromRGB(42, 46, 56), lamp, Enum.Material.Metal)
+	makePart("TopArm", Vector3.new(0.45, 0.45, 2.6), pos + Vector3.new(0, 11.8, -1.0), Color3.fromRGB(42, 46, 56), lamp, Enum.Material.Metal)
+
+	-- Glowing Star Parol Lantern hanging from the street lamp
+	local parolPos = pos + Vector3.new(0, 10.4, -2.0)
+	local starA = makePart("ParolStarA", Vector3.new(1.8, 1.8, 0.4), parolPos, Color3.fromRGB(255, 225, 85), lamp, Enum.Material.Neon)
+	local starB = makePart("ParolStarB", Vector3.new(1.8, 1.8, 0.4), parolPos, Color3.fromRGB(255, 85, 120), lamp, Enum.Material.Neon)
+	starB.CFrame = CFrame.new(parolPos) * CFrame.Angles(0, 0, math.rad(45))
+
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 220, 130)
+	light.Brightness = 1.6
+	light.Range = 24
+	light.Parent = starA
+end
+
+local function buildStreetFoodCart(parent: Instance, centerPos: Vector3)
+	local cart = Instance.new("Model")
+	cart.Name = "TindahanNgStreetFood"
+	cart.Parent = parent
+
+	makePart("CartBase", Vector3.new(11.0, 3.2, 4.4), centerPos + Vector3.new(0, 1.6, 0), Color3.fromRGB(152, 98, 48), cart, Enum.Material.WoodPlanks)
+	local counter = makePart("StreetFoodCounter", Vector3.new(11.6, 0.45, 5.0), centerPos + Vector3.new(0, 3.4, 0), Color3.fromRGB(245, 195, 55), cart, Enum.Material.Wood)
+	CollectionService:AddTag(counter, "PlotFeedStation")
+
+	makePart("PostL", Vector3.new(0.55, 6.2, 0.55), centerPos + Vector3.new(-5.0, 6.3, -1.8), Color3.fromRGB(110, 72, 36), cart, Enum.Material.Wood)
+	makePart("PostR", Vector3.new(0.55, 6.2, 0.55), centerPos + Vector3.new(5.0, 6.3, -1.8), Color3.fromRGB(110, 72, 36), cart, Enum.Material.Wood)
+	makePart("UmbrellaRoof", Vector3.new(12.6, 0.55, 6.0), centerPos + Vector3.new(0, 9.2, 0), Color3.fromRGB(235, 95, 35), cart, Enum.Material.Fabric)
+
+	-- Visual Kawali, Kwek-Kwek, Fishball, Banana Cue & Halo-Halo props on counter
+	makePart("FishballTray", Vector3.new(2.0, 0.6, 1.6), centerPos + Vector3.new(-3.6, 3.9, 0), Color3.fromRGB(255, 215, 95), cart, Enum.Material.Neon)
+	makePart("KwekKwekTray", Vector3.new(2.0, 0.6, 1.6), centerPos + Vector3.new(-1.2, 3.9, 0), Color3.fromRGB(255, 120, 30), cart, Enum.Material.Neon)
+	makePart("BananaCueTray", Vector3.new(2.0, 0.6, 1.6), centerPos + Vector3.new(1.2, 3.9, 0), Color3.fromRGB(215, 145, 40), cart, Enum.Material.SmoothPlastic)
+	makePart("HaloHaloGlass", Vector3.new(1.6, 1.4, 1.6), centerPos + Vector3.new(3.6, 4.3, 0), Color3.fromRGB(215, 95, 255), cart, Enum.Material.Neon)
+
+	local signPart = makePart("StreetFoodSign", Vector3.new(11.8, 2.4, 0.9), centerPos + Vector3.new(0, 10.6, -1.8), Color3.fromRGB(28, 24, 38), cart, Enum.Material.Metal)
+	addSurfaceSign(signPart, Enum.NormalId.Front, "🍡 ALAGA & PAKAIN (STREET FOOD) 🍧", "Press E to Feed Pets Fishball/Kwek-Kwek for 10m BUSOG MODE (+20% $/s)!", Color3.fromRGB(255, 205, 55))
+	addSurfaceSign(signPart, Enum.NormalId.Back, "🍡 ALAGA & PAKAIN (STREET FOOD) 🍧", "Press E to Feed Pets Fishball/Kwek-Kwek for 10m BUSOG MODE (+20% $/s)!", Color3.fromRGB(255, 205, 55))
+end
+
+local function buildSariSariFacade(parent: Instance, centerPos: Vector3, titleText: string, subText: string, roofColor: Color3, accentColor: Color3)
+	local stall = Instance.new("Model")
+	stall.Name = "SariSariStall"
+	stall.Parent = parent
+
+	makePart("WallBack", Vector3.new(12.5, 8.2, 1.2), centerPos + Vector3.new(0, 4.1, -3.5), Color3.fromRGB(235, 215, 165), stall, Enum.Material.WoodPlanks)
+	makePart("TinRoof", Vector3.new(13.8, 0.5, 7.5), centerPos + Vector3.new(0, 8.4, -1.2), roofColor, stall, Enum.Material.CorrodedMetal)
+
+	-- Colorful Hanging Sari-Sari Sachets (Shampoo/Snack strips)
+	local sachetColors = {
+		Color3.fromRGB(255, 65, 65),
+		Color3.fromRGB(255, 210, 45),
+		Color3.fromRGB(45, 185, 255),
+		Color3.fromRGB(85, 235, 105),
+	}
+	for sx = -4.5, 4.5, 1.5 do
+		local c = sachetColors[((math.abs(math.floor(sx)) % #sachetColors) + 1)]
+		makePart(`SachetStrip_{sx}`, Vector3.new(0.7, 2.4, 0.25), centerPos + Vector3.new(sx, 6.5, -2.6), c, stall, Enum.Material.SmoothPlastic)
+	end
+
+	local signPart = makePart("SariSign", Vector3.new(12.4, 2.1, 0.8), centerPos + Vector3.new(0, 9.7, -3.2), Color3.fromRGB(24, 28, 40), stall, Enum.Material.Metal)
+	addSurfaceSign(signPart, Enum.NormalId.Front, titleText, subText, accentColor)
+	addSurfaceSign(signPart, Enum.NormalId.Back, titleText, subText, accentColor)
+end
+
+-- 🌋 PINOY HORIZON LANDMARKS: Bulkang Mayon Silhouette, Mountain Ridges & Passing Wooden Bangka Boats!
+local function buildPinoyHorizonLandmarks(parent: Instance)
+	local horizon = Instance.new("Folder")
+	horizon.Name = "PinoyHorizonLandmarks"
+	horizon.Parent = parent
+
+	-- 1) Symmetrical Conical Bulkang Mayon Silhouette on the distant Southeast Horizon!
+	local mayonCenter = Vector3.new(340, -10, 390)
+	local mayonLayers = {
+		{ w = 260, h = 28, y = 14, col = Color3.fromRGB(58, 98, 62) },
+		{ w = 210, h = 32, y = 44, col = Color3.fromRGB(64, 105, 68) },
+		{ w = 162, h = 34, y = 77, col = Color3.fromRGB(72, 108, 76) },
+		{ w = 118, h = 36, y = 112, col = Color3.fromRGB(82, 98, 86) },
+		{ w = 78, h = 36, y = 148, col = Color3.fromRGB(92, 96, 94) },
+		{ w = 44, h = 32, y = 182, col = Color3.fromRGB(106, 102, 100) },
+		{ w = 22, h = 22, y = 209, col = Color3.fromRGB(122, 110, 108) },
+	}
+	for idx, layer in mayonLayers do
+		local conePart = makePart(
+			`BulkangMayonLayer_{idx}`,
+			Vector3.new(layer.w, layer.h, layer.w),
+			mayonCenter + Vector3.new(0, layer.y, 0),
+			layer.col,
+			horizon,
+			Enum.Material.Slate
+		)
+		conePart.CanCollide = false
+	end
+	-- Gentle white crater steam cloud above Mayon's peak
+	local steamCloud = makePart("MayonSteamPlume", Vector3.new(38, 12, 38), mayonCenter + Vector3.new(0, 228, 0), Color3.fromRGB(245, 248, 255), horizon, Enum.Material.SmoothPlastic)
+	steamCloud.Transparency = 0.25
+	steamCloud.CanCollide = false
+
+	-- 2) Surrounding Cordillera / Sierra Madre Mountain Ridges around the island perimeter
+	local ridges = {
+		{ pos = Vector3.new(-380, 35, 360), size = Vector3.new(280, 95, 140), col = Color3.fromRGB(62, 112, 72) },
+		{ pos = Vector3.new(-120, 42, 420), size = Vector3.new(310, 110, 150), col = Color3.fromRGB(56, 104, 68) },
+		{ pos = Vector3.new(120, 38, 430), size = Vector3.new(260, 98, 140), col = Color3.fromRGB(64, 115, 74) },
+		{ pos = Vector3.new(-460, 32, 40), size = Vector3.new(140, 88, 360), col = Color3.fromRGB(60, 108, 72) },
+		{ pos = Vector3.new(460, 34, 40), size = Vector3.new(140, 92, 360), col = Color3.fromRGB(60, 108, 72) },
+		{ pos = Vector3.new(-440, 36, -320), size = Vector3.new(150, 96, 380), col = Color3.fromRGB(54, 98, 70) },
+		{ pos = Vector3.new(440, 36, -320), size = Vector3.new(150, 96, 380), col = Color3.fromRGB(54, 98, 70) },
+	}
+	for idx, r in ridges do
+		local ridge = makePart(`HorizonRidge_{idx}`, r.size, r.pos, r.col, horizon, Enum.Material.Slate)
+		ridge.CanCollide = false
+	end
+
+	-- 3) Passing Wooden Bangka Outrigger Boats on the Ocean Water!
+	local bangkaConfigs = {
+		{ pos = Vector3.new(-285, -3.2, 45), sailColor = Color3.fromRGB(255, 195, 45), yaw = 0 },
+		{ pos = Vector3.new(285, -3.2, 85), sailColor = Color3.fromRGB(55, 195, 255), yaw = 180 },
+		{ pos = Vector3.new(-275, -3.2, -180), sailColor = Color3.fromRGB(245, 75, 85), yaw = 15 },
+		{ pos = Vector3.new(275, -3.2, -160), sailColor = Color3.fromRGB(85, 235, 125), yaw = -165 },
+	}
+	for idx, bc in bangkaConfigs do
+		local boat = Instance.new("Model")
+		boat.Name = `BangkaBoat_{idx}`
+		boat.Parent = horizon
+
+		local bcf = CFrame.new(bc.pos) * CFrame.Angles(0, math.rad(bc.yaw), 0)
+		local hull = makePart("Hull", Vector3.new(3.6, 2.2, 18.5), bc.pos, Color3.fromRGB(142, 92, 46), boat, Enum.Material.Wood)
+		hull.CFrame = bcf
+		hull.CanCollide = false
+		boat.PrimaryPart = hull
+
+		local prowF = makePart("ProwF", Vector3.new(2.2, 2.4, 4.2), bc.pos, Color3.fromRGB(235, 65, 55), boat, Enum.Material.Wood)
+		prowF.CFrame = bcf * CFrame.new(0, 0.3, -10.2)
+		prowF.CanCollide = false
+
+		-- Bamboo Outriggers (Katig)
+		for _, zCross in { -5.0, 5.0 } do
+			local cross = makePart("CrossBeam", Vector3.new(13.5, 0.35, 0.35), bc.pos, Color3.fromRGB(175, 138, 72), boat, Enum.Material.Wood)
+			cross.CFrame = bcf * CFrame.new(0, 0.8, zCross)
+			cross.CanCollide = false
+		end
+		for _, xFloater in { -6.5, 6.5 } do
+			local katig = makePart("KatigFloat", Vector3.new(0.55, 0.55, 15.5), bc.pos, Color3.fromRGB(185, 148, 78), boat, Enum.Material.Wood)
+			katig.CFrame = bcf * CFrame.new(xFloater, 0.2, 0)
+			katig.CanCollide = false
+		end
+
+		local mast = makePart("Mast", Vector3.new(0.45, 11.0, 0.45), bc.pos, Color3.fromRGB(125, 82, 40), boat, Enum.Material.Wood)
+		mast.CFrame = bcf * CFrame.new(0, 5.8, -1.0)
+		mast.CanCollide = false
+
+		local sail = makePart("Sail", Vector3.new(0.3, 7.5, 6.8), bc.pos, bc.sailColor, boat, Enum.Material.Fabric)
+		sail.CFrame = bcf * CFrame.new(0, 6.5, -1.0) * CFrame.Angles(0, math.rad(18), 0)
+		sail.CanCollide = false
+
+		CollectionService:AddTag(boat, "BangkaBoat")
+	end
+end
+
 local function configureSunnyLighting()
 	Lighting.ClockTime = 13.5
 	Lighting.Brightness = 2.2
@@ -366,7 +603,7 @@ function Blockout.EnsureMap()
 	end
 
 	local existingPrison = workspace:FindFirstChild("Prison")
-	if existingPrison and not existingPrison:GetAttribute("RedesignedV27") then
+	if existingPrison and not existingPrison:GetAttribute("RedesignedV29") then
 		existingPrison:Destroy()
 		for _, folderName in { "BasePlots", "Lobby", "PatrolPoints", "EnemySpawns", "Enemies" } do
 			local f = workspace:FindFirstChild(folderName)
@@ -381,7 +618,7 @@ function Blockout.EnsureMap()
 	if not prison then
 		prison = Instance.new("Folder")
 		prison.Name = "Prison"
-		prison:SetAttribute("RedesignedV27", true)
+		prison:SetAttribute("RedesignedV29", true)
 		prison.Parent = workspace
 
 		-- Far Ocean Water extension so water stretches seamlessly all the way past Zone 20!
@@ -395,7 +632,7 @@ function Blockout.EnsureMap()
 		safeLine.CanCollide = false
 		addSurfaceSign(safeLine, Enum.NormalId.Top, "🛡️ SAFE ZONE LINE 🛡️", "Cross here with a cage to secure it!", Color3.fromRGB(80, 255, 140))
 
-		buildSpeedKaratula(prison, Vector3.new(54, 0.5, -45))
+		buildSpeedKaratula(prison, Vector3.new(72, 0.5, -24))
 
 		-- Warm Terracotta Corridor Side Walls + Bright Lime Grass Top (Steal-a-Pet style!)
 		local wallColor = Color3.fromRGB(202, 142, 80)
@@ -718,10 +955,10 @@ function Blockout.EnsureMap()
 			buildDecorativeTree(lobby, tPos)
 		end
 
-		-- 3D Tindahan ng Pamalo (Slap & Steal Tools Market Stand) right near the Prison entrance!
-		buildPamaloShopStand(lobby, Vector3.new(0, 0.5, -24))
+		-- LEFT PLAZA WING (Spaced out cleanly to the left of the Zone 1 runway so the center path is 100% wide open!)
+		buildPamaloShopStand(lobby, Vector3.new(-45, 0.5, -24))
 
-		local fmCenter = Vector3.new(-34, 0, -18)
+		local fmCenter = Vector3.new(-72, 0, -24)
 		makePart("FusionBase", Vector3.new(11, 1.2, 11), fmCenter + Vector3.new(0, 0.6, 0), Color3.fromRGB(45, 48, 62), lobby, Enum.Material.Metal)
 		makePart("FusionRing", Vector3.new(8.5, 0.4, 8.5), fmCenter + Vector3.new(0, 1.3, 0), Color3.fromRGB(170, 80, 255), lobby, Enum.Material.Neon)
 		local fmHeader = makePart("FusionSign", Vector3.new(10, 2.4, 1.2), fmCenter + Vector3.new(0, 9.2, -4.0), Color3.fromRGB(28, 32, 44), lobby, Enum.Material.Metal)
@@ -731,6 +968,8 @@ function Blockout.EnsureMap()
 		local fmCore = makePart("FusionMachine", Vector3.new(4.5, 5.5, 4.5), fmCenter + Vector3.new(0, 4.2, 0), Color3.fromRGB(165, 75, 255), lobby, Enum.Material.Neon)
 		fmCore.Transparency = 0.2
 		CollectionService:AddTag(fmCore, "FusionMachine")
+
+		buildStreetFoodCart(lobby, Vector3.new(-92, 0.35, -24))
 
 		-- 🎪 FIESTA EVENT PLAZA (Placed centrally BEHIND the plots: Z = 150, equal distance for all players!)
 		local fiestaCenter = Vector3.new(0, 0, 150)
@@ -786,8 +1025,8 @@ function Blockout.EnsureMap()
 		addSurfaceSign(fiestaSign, Enum.NormalId.Front, "🎪 FIESTA EVENT PLAZA 🎉", "Join Rotating Pinoy Fiesta Events for 2x Speed, Cash & Luck Boosts!", Color3.fromRGB(255, 215, 55))
 		CollectionService:AddTag(fiestaSign, "FiestaStageSign")
 
-		-- BENTAHAN NG PET (Enlarged Grand Pet Buy & Sell Market Stand + Big Glowing Step-On Pad!)
-		local sellCenter = Vector3.new(32, 0, -21)
+		-- RIGHT PLAZA WING: BENTAHAN NG PET, SPEED GUIDE & LEADERBOARD (Spaced out cleanly to the right of the Zone 1 runway!)
+		local sellCenter = Vector3.new(44, 0, -24)
 		local sellStand = Instance.new("Model")
 		sellStand.Name = "BentahanNgPet"
 		sellStand.Parent = lobby
@@ -812,9 +1051,27 @@ function Blockout.EnsureMap()
 		local sellPad = makePart("PetSellPad", Vector3.new(12.6, 0.55, 9.6), sellCenter + Vector3.new(0, 0.58, 4.5), Color3.fromRGB(65, 235, 115), sellStand, Enum.Material.Neon)
 		CollectionService:AddTag(sellPad, "PetSellPad")
 
-		makePart("BoardStand", Vector3.new(16, 1.2, 3), Vector3.new(56, 0.6, -18), Color3.fromRGB(50, 55, 70), lobby, Enum.Material.Metal)
-		local board = makePart("LeaderboardBoard", Vector3.new(16, 11, 1), Vector3.new(56, 6.7, -18), Color3.fromRGB(25, 30, 45), lobby, Enum.Material.Metal)
+		makePart("BoardStand", Vector3.new(16, 1.2, 3), Vector3.new(94, 0.6, -24), Color3.fromRGB(50, 55, 70), lobby, Enum.Material.Metal)
+		local board = makePart("LeaderboardBoard", Vector3.new(16, 11, 1), Vector3.new(94, 6.7, -24), Color3.fromRGB(25, 30, 45), lobby, Enum.Material.Metal)
 		CollectionService:AddTag(board, "LeaderboardBoard")
+
+		-- 🚌 BARANGAY KANTO PLAZA ATMOSPHERE (Parked on the outer plaza boulevard so the center runway is completely open!)
+		buildPinoyJeepney(lobby, Vector3.new(-118, 0.35, -18), 18)
+		buildPinoyTricycle(lobby, Vector3.new(116, 0.35, -18), -18)
+
+		for _, lampPos in {
+			Vector3.new(-70, 0.35, 16),
+			Vector3.new(70, 0.35, 16),
+			Vector3.new(-140, 0.35, 16),
+			Vector3.new(140, 0.35, 16),
+			Vector3.new(-18, 0.35, 114),
+			Vector3.new(18, 0.35, 114),
+		} do
+			buildStreetParolLamp(lobby, lampPos)
+		end
+
+		-- 🌋 PINOY HORIZON LANDMARKS (Bulkang Mayon, Mountain Ridges & Wooden Bangka Boats)
+		buildPinoyHorizonLandmarks(lobby)
 	end
 
 	-- 4) PATROL POINTS FOR ALL 6 ZONES

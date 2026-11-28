@@ -65,6 +65,11 @@ function StealService.DropStolenPet(thief: Player, reason: string?)
 		return
 	end
 	stolenCarrying[thief] = nil
+	thief:SetAttribute("IsCarryingStolen", false)
+	if not CageService.IsCarrying(thief) then
+		thief:SetAttribute("CarriedPetId", "")
+		thief:SetAttribute("CarriedRarity", "")
+	end
 	carry.CarryModel:Destroy()
 	StatsService.Refresh(thief)
 
@@ -84,6 +89,11 @@ local function completeSteal(thief: Player)
 		return
 	end
 	stolenCarrying[thief] = nil
+	thief:SetAttribute("IsCarryingStolen", false)
+	if not CageService.IsCarrying(thief) then
+		thief:SetAttribute("CarriedPetId", "")
+		thief:SetAttribute("CarriedRarity", "")
+	end
 	carry.CarryModel:Destroy()
 	StatsService.Refresh(thief)
 
@@ -154,6 +164,8 @@ local function onStealTriggered(owner: Player, plot: Model, uid: string, thief: 
 
 	local carryModel = PetVisuals.BuildModel(owned.PetId, owned.Mutation, root.CFrame)
 	carryModel.Name = "StolenPetCarry"
+	carryModel:SetAttribute("CarriedByUserId", thief.UserId)
+	carryModel:SetAttribute("Rarity", petInfo.Rarity)
 	carryModel.Parent = character
 
 	CageService.AttachModelToPlayer(carryModel, root)
@@ -167,6 +179,10 @@ local function onStealTriggered(owner: Player, plot: Model, uid: string, thief: 
 		Mutation = owned.Mutation,
 		CarryModel = carryModel,
 	}
+	thief:SetAttribute("IsCarryingStolen", true)
+	thief:SetAttribute("CarriedPetId", owned.PetId)
+	thief:SetAttribute("CarriedRarity", petInfo.Rarity)
+	thief:SetAttribute("LastCarryPickupAt", workspace:GetServerTimeNow())
 
 	StatsService.Refresh(thief)
 	ClientSyncService.Notify(owner, `🚨 {thief.DisplayName} is stealing your {petInfo.Emoji} {petInfo.DisplayName}! Touch them to stop them!`, Color3.fromRGB(255, 80, 80))
@@ -246,8 +262,7 @@ local function watchPlayer(player: Player)
 end
 
 function StealService.Init()
-	BaseService.PetModelRendered:Connect(attachStealPrompt)
-
+	-- Player bases/plots are strictly 100% SAFE (NO base stealing from player plots!).
 	CageService.SetExternalCarryCheck(StealService.IsCarryingStolen)
 
 	EnemyService.SetExtraCarryingCheck(function(player: Player): (boolean, Model?)

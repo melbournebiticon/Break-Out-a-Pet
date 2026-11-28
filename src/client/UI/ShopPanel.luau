@@ -96,8 +96,63 @@ function ShopPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 		end
 	end)
 
+	-- 3) Pinoy Street Food Feeding ("Alaga & Pakain" — 10m Busog Mode +20% $/s!)
+	local foodButtons: { [string]: TextButton } = {}
+	local orderIdx = 2
+	for _, foodId in ShopData.StreetFoodOrder do
+		local food = ShopData.GetStreetFood(foodId)
+		if food then
+			orderIdx += 1
+			local card = Theme.MakeFrame(`Food_{food.Id}`, UDim2.new(1, -8, 0, 84), UDim2.fromScale(0, 0), Theme.BgCard, 12, scroll)
+			card.LayoutOrder = orderIdx
+			Theme.AddStroke(card, Theme.AccentGold, 2)
+
+			local t = Theme.MakeLabel(
+				"Title",
+				`{food.Emoji} [PAKAIN] {food.DisplayName}`,
+				UDim2.new(0.62, 0, 0, 28),
+				UDim2.fromOffset(14, 10),
+				Theme.FontTitle,
+				Theme.AccentGold,
+				card
+			)
+			t.TextXAlignment = Enum.TextXAlignment.Left
+
+			local d = Theme.MakeLabel(
+				"Desc",
+				food.Description,
+				UDim2.new(0.62, 0, 0, 28),
+				UDim2.fromOffset(14, 42),
+				Theme.FontBody,
+				Theme.TextMuted,
+				card
+			)
+			d.TextXAlignment = Enum.TextXAlignment.Left
+
+			local fBtn = Theme.MakeButton(
+				"FeedBtn",
+				`Feed ${NumberFormat.Short(food.Cost)}`,
+				UDim2.fromOffset(145, 46),
+				UDim2.new(1, -160, 0.5, -23),
+				Theme.AccentGreen,
+				card,
+				function()
+					local res = shopFn:InvokeServer("BuyStreetFood", food.Id)
+					if typeof(res) == "table" then
+						if res.Ok then
+							SoundController.Play("Purchase")
+							Toasts.Show(tostring(res.Message), Theme.AccentGreen)
+						else
+							Toasts.Show(tostring(res.Message), Theme.AccentRed)
+						end
+					end
+				end
+			)
+			foodButtons[food.Id] = fBtn
+		end
+	end
+
 	-- Optional Robux GamePasses / Products (only shown when ID > 0)
-	local orderIdx = 3
 	for key, passInfo in Monetization.GamePasses do
 		if passInfo.Id > 0 then
 			orderIdx += 1
@@ -173,6 +228,16 @@ function ShopPanel.Init(screenGui: ScreenGui, onClose: () -> ())
 			local canAfford = money >= slotPrice
 			slotBtn.BackgroundColor3 = if canAfford then Theme.AccentGreen else Theme.BgHeader
 			slotBtn.Active = canAfford
+		end
+
+		for foodId, fBtn in foodButtons do
+			local food = ShopData.GetStreetFood(foodId)
+			if food then
+				local canAfford = money >= food.Cost
+				fBtn.Text = `Feed ${NumberFormat.Short(food.Cost)}`
+				fBtn.BackgroundColor3 = if canAfford then Theme.AccentGreen else Theme.BgHeader
+				fBtn.Active = canAfford
+			end
 		end
 	end
 

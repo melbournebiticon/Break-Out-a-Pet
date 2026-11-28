@@ -166,10 +166,100 @@ function StatsService.GetTotalSpeedStat(player: Player): number
 	return Config.BaseWalkSpeed + StatsService.GetTrainedSpeed(player)
 end
 
+-- Returns 1.25 (+25% plot-wide income multiplier) when a thematic Pinoy "Barkada Combo" is active on the player's plot!
+function StatsService.GetBarkadaComboMultiplier(player: Player): number
+	if player:GetAttribute("BarkadaComboActive") == true then
+		return 1.25
+	end
+	return 1.0
+end
+
 function StatsService.GetBaseWalkSpeed(player: Player): number
 	local totalStat = StatsService.GetTotalSpeedStat(player)
 	player:SetAttribute("TotalSpeedStat", totalStat)
 	return ShopData.StatToPhysicalWalkSpeed(totalStat)
+end
+
+local function getSpeedTrailColorSequence(totalSpeedStat: number, speedLevel: number): ColorSequence
+	if totalSpeedStat >= 10000000 or speedLevel >= 12 then
+		-- Rainbow / Celestial Godly Trail (like high-tier Steal a Pet trails!)
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 70, 120)),
+			ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 220, 55)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(75, 255, 145)),
+			ColorSequenceKeypoint.new(0.75, Color3.fromRGB(65, 215, 255)),
+			ColorSequenceKeypoint.new(1.0, Color3.fromRGB(195, 85, 255)),
+		})
+	elseif totalSpeedStat >= 250000 or speedLevel >= 8 then
+		-- Mythic Crimson-Purple Flame Trail
+		return ColorSequence.new(Color3.fromRGB(255, 65, 115), Color3.fromRGB(170, 65, 255))
+	elseif totalSpeedStat >= 15000 or speedLevel >= 5 then
+		-- Golden Fiesta Speed Trail
+		return ColorSequence.new(Color3.fromRGB(255, 230, 65), Color3.fromRGB(255, 115, 30))
+	elseif totalSpeedStat >= 1000 or speedLevel >= 2 then
+		-- Emerald Neon -> Electric Cyan Trail
+		return ColorSequence.new(Color3.fromRGB(80, 255, 150), Color3.fromRGB(0, 210, 255))
+	else
+		-- Starter Steal-a-Pet Electric Cyan-Blue Speed Trail
+		return ColorSequence.new(Color3.fromRGB(95, 230, 255), Color3.fromRGB(45, 125, 255))
+	end
+end
+
+local function updateCharacterSpeedTrail(player: Player, character: Model)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") then
+		return
+	end
+
+	local attTop = root:FindFirstChild("SpeedTrailTop") :: Attachment?
+	if not attTop then
+		local a0 = Instance.new("Attachment")
+		a0.Name = "SpeedTrailTop"
+		a0.Position = Vector3.new(0, 1.25, 0)
+		a0.Parent = root
+		attTop = a0
+	end
+
+	local attBottom = root:FindFirstChild("SpeedTrailBottom") :: Attachment?
+	if not attBottom then
+		local a1 = Instance.new("Attachment")
+		a1.Name = "SpeedTrailBottom"
+		a1.Position = Vector3.new(0, -1.25, 0)
+		a1.Parent = root
+		attBottom = a1
+	end
+
+	local trail = root:FindFirstChild("StealAPetSpeedTrail") :: Trail?
+	if not trail then
+		local tr = Instance.new("Trail")
+		tr.Name = "StealAPetSpeedTrail"
+		tr.Attachment0 = attTop
+		tr.Attachment1 = attBottom
+		tr.FaceCamera = true
+		tr.LightEmission = 0.85
+		tr.LightInfluence = 0.15
+		tr.MinLength = 0.1
+		tr.Lifetime = 0.42
+		tr.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0.0, 0.18),
+			NumberSequenceKeypoint.new(0.45, 0.38),
+			NumberSequenceKeypoint.new(1.0, 1.0),
+		})
+		tr.WidthScale = NumberSequence.new({
+			NumberSequenceKeypoint.new(0.0, 1.0),
+			NumberSequenceKeypoint.new(0.6, 0.65),
+			NumberSequenceKeypoint.new(1.0, 0.1),
+		})
+		tr.Parent = root
+		trail = tr
+	end
+
+	if trail then
+		local totalStat = StatsService.GetTotalSpeedStat(player)
+		local speedLvl = StatsService.GetSpeedLevel(player)
+		trail.Color = getSpeedTrailColorSequence(totalStat, speedLvl)
+		trail.Enabled = player:GetAttribute("SlowMode") ~= true
+	end
 end
 
 function StatsService.Refresh(player: Player)
@@ -207,6 +297,7 @@ function StatsService.Refresh(player: Player)
 	humanoid.WalkSpeed = finalWalkSpeed
 	humanoid.UseJumpPower = false
 	humanoid.JumpHeight = Config.BaseJumpHeight * jumpMult
+	updateCharacterSpeedTrail(player, character)
 end
 
 local function isStandingOnOwnTreadmill(player: Player): boolean
@@ -302,6 +393,15 @@ end
 function StatsService.Init()
 	local treadmillTickEvent = Remotes.GetEvent("TreadmillTick")
 	local slowModeEvent = Remotes.GetEvent("ToggleSlowMode")
+
+	-- Post-Fiesta "Busog & Swerte" (Boodle Fight) +15% WalkSpeed Modifier
+	StatsService.AddSpeedModifier("BoodleFightBuff", function(player: Player): number
+		local untilAttr = player:GetAttribute("BoodleBuffUntil")
+		if typeof(untilAttr) == "number" and untilAttr > workspace:GetServerTimeNow() then
+			return 1.15
+		end
+		return 1.0
+	end)
 
 	for _, inst in CollectionService:GetTagged("PlotTreadmillConsole") do
 		task.spawn(setupTreadmillConsole, inst)

@@ -242,6 +242,7 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	leftLayout.Padding = UDim.new(0, 6)
 	leftLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	leftLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+	leftLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	leftLayout.Parent = leftStats
 
 	Theme.BindResponsiveScale(leftStats, 0.74, function(isCompact: boolean)
@@ -250,12 +251,14 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 
 	-- 1) Total Money Pill on the Left
 	local moneyCard = Theme.MakeFrame("MoneyCard", UDim2.fromOffset(168, 42), UDim2.fromScale(0, 0), Theme.BgDark, 12, leftStats)
+	moneyCard.LayoutOrder = 1
 	Theme.AddStroke(moneyCard, Theme.AccentGold, 2)
 	local moneyLabel = Theme.MakeLabel("MoneyLabel", "💵 $0", UDim2.fromScale(0.90, 0.74), UDim2.fromScale(0.05, 0.13), Theme.FontTitle, Theme.AccentGold, moneyCard)
 	moneyLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 	-- 2) Character WalkSpeed Pill on the Left
 	local speedCard = Theme.MakeFrame("SpeedCard", UDim2.fromOffset(168, 42), UDim2.fromScale(0, 0), Theme.BgDark, 12, leftStats)
+	speedCard.LayoutOrder = 2
 	Theme.AddStroke(speedCard, Theme.AccentBlue, 2)
 	local speedLabel = Theme.MakeLabel("SpeedLabel", "⚡ Speed: 16.0", UDim2.fromScale(0.90, 0.74), UDim2.fromScale(0.05, 0.13), Theme.FontTitle, Color3.fromRGB(120, 215, 255), speedCard)
 	speedLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -265,24 +268,36 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	utilityRow.Name = "UtilityRow"
 	utilityRow.Size = UDim2.fromOffset(168, 32)
 	utilityRow.BackgroundTransparency = 1
+	utilityRow.LayoutOrder = 3
 	utilityRow.Parent = leftStats
 
 	-- 3) Slow Mode Toggle Button (Like Steal a Pet!)
 	local slowModeEvent = Remotes.GetEvent("ToggleSlowMode")
-	local slowBtn = Theme.MakeButton("SlowModeBtn", "🐢 Slow: OFF", UDim2.fromOffset(122, 32), UDim2.fromScale(0, 0), Theme.BgCard, utilityRow, function()
+	local slowBtn = Theme.MakeButton("SlowModeBtn", "🐢 Slow: OFF", UDim2.fromOffset(78, 32), UDim2.fromScale(0, 0), Theme.BgCard, utilityRow, function()
 		slowModeEvent:FireServer()
 	end)
 	Theme.AddStroke(slowBtn, Theme.BgHeader, 2)
 	local function updateSlowBtn()
 		local isSlow = player:GetAttribute("SlowMode") == true
-		slowBtn.Text = if isSlow then "🐢 Slow: ON" else "🐢 Slow: OFF"
+		slowBtn.Text = if isSlow then "🐢 Slow" else "🐢 Fast"
 		slowBtn.BackgroundColor3 = if isSlow then Theme.AccentGreen else Theme.BgCard
 	end
 	player:GetAttributeChangedSignal("SlowMode"):Connect(updateSlowBtn)
 	updateSlowBtn()
 
-	-- 3b) BGM Music Mute/Unmute Button (Grow a Garden BGM)
-	local musicBtn = Theme.MakeButton("MusicBtn", "🎵", UDim2.fromOffset(40, 32), UDim2.fromOffset(128, 0), Theme.BgCard, utilityRow, function()
+	-- 3b) Hide Pet Labels Toggle Button (Prevents giant pet names & floating $/s popups from cluttering the screen!)
+	local labelsHidden = false
+	local labelToggleBtn: TextButton
+	labelToggleBtn = Theme.MakeButton("HideLabelsBtn", "🏷️ ON", UDim2.fromOffset(48, 32), UDim2.fromOffset(82, 0), Theme.BgCard, utilityRow, function()
+		labelsHidden = not labelsHidden
+		player:SetAttribute("HidePetLabels", labelsHidden)
+		labelToggleBtn.Text = if labelsHidden then "🏷️ OFF" else "🏷️ ON"
+		labelToggleBtn.BackgroundColor3 = if labelsHidden then Color3.fromRGB(55, 30, 30) else Theme.BgCard
+	end)
+	Theme.AddStroke(labelToggleBtn, Theme.BgHeader, 2)
+
+	-- 3c) BGM Music Mute/Unmute Button (Grow a Garden BGM)
+	local musicBtn = Theme.MakeButton("MusicBtn", "🎵", UDim2.fromOffset(34, 32), UDim2.fromOffset(134, 0), Theme.BgCard, utilityRow, function()
 		local isOn = SoundController.ToggleMusic()
 		local mBtn = utilityRow:FindFirstChild("MusicBtn")
 		if mBtn and mBtn:IsA("TextButton") then
@@ -294,23 +309,45 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 
 	-- 4) Live Fiesta Event Status & Active Fiesta Boost Pills on the Left HUD!
 	local fiestaBanner = Theme.MakeFrame("FiestaBanner", UDim2.fromOffset(168, 28), UDim2.fromScale(0, 0), Color3.fromRGB(38, 26, 54), 10, leftStats)
+	fiestaBanner.LayoutOrder = 4
 	Theme.AddStroke(fiestaBanner, Theme.AccentGold, 1.5)
 	local fiestaBannerLbl = Theme.MakeLabel("Text", "🎪 Fiesta Plaza Ready!", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, fiestaBanner)
 
 	local speedBoostPill = Theme.MakeFrame("SpeedBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(18, 48, 68), 8, leftStats)
+	speedBoostPill.LayoutOrder = 5
 	speedBoostPill.Visible = false
 	Theme.AddStroke(speedBoostPill, Color3.fromRGB(80, 235, 255), 1.5)
 	local speedBoostLbl = Theme.MakeLabel("Text", "⚡ 2x Treadmill (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Color3.fromRGB(80, 235, 255), speedBoostPill)
 
 	local moneyBoostPill = Theme.MakeFrame("MoneyBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(18, 56, 32), 8, leftStats)
+	moneyBoostPill.LayoutOrder = 6
 	moneyBoostPill.Visible = false
 	Theme.AddStroke(moneyBoostPill, Theme.AccentGreen, 1.5)
 	local moneyBoostLbl = Theme.MakeLabel("Text", "💰 2x Pet Cash (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGreen, moneyBoostPill)
 
 	local luckBoostPill = Theme.MakeFrame("LuckBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(58, 42, 16), 8, leftStats)
+	luckBoostPill.LayoutOrder = 7
 	luckBoostPill.Visible = false
 	Theme.AddStroke(luckBoostPill, Theme.AccentGold, 1.5)
 	local luckBoostLbl = Theme.MakeLabel("Text", "🍀 2x Luck & Unlock (3:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, luckBoostPill)
+
+	local boodleBoostPill = Theme.MakeFrame("BoodleBoostPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(22, 54, 28), 8, leftStats)
+	boodleBoostPill.LayoutOrder = 8
+	boodleBoostPill.Visible = false
+	Theme.AddStroke(boodleBoostPill, Color3.fromRGB(125, 255, 115), 1.5)
+	local boodleBoostLbl = Theme.MakeLabel("Text", "🍽️ Busog & Swerte (10:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Color3.fromRGB(125, 255, 115), boodleBoostPill)
+
+	local barkadaPill = Theme.MakeFrame("BarkadaComboPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(52, 38, 16), 8, leftStats)
+	barkadaPill.LayoutOrder = 9
+	barkadaPill.Visible = false
+	Theme.AddStroke(barkadaPill, Theme.AccentGold, 1.5)
+	local barkadaLbl = Theme.MakeLabel("Text", "🤝 Bukid Trio (+25% $/s)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Theme.AccentGold, barkadaPill)
+
+	local streetFoodPill = Theme.MakeFrame("StreetFoodBusogPill", UDim2.fromOffset(168, 24), UDim2.fromScale(0, 0), Color3.fromRGB(58, 28, 36), 8, leftStats)
+	streetFoodPill.LayoutOrder = 10
+	streetFoodPill.Visible = false
+	Theme.AddStroke(streetFoodPill, Color3.fromRGB(255, 165, 85), 1.5)
+	local streetFoodLbl = Theme.MakeLabel("Text", "🍡 Busog +20% $/s (10:00)", UDim2.fromScale(0.92, 0.86), UDim2.fromScale(0.04, 0.07), Theme.FontTitle, Color3.fromRGB(255, 185, 95), streetFoodPill)
 
 	local function formatTimer(sec: number): string
 		local s = math.max(0, math.ceil(sec))
@@ -346,6 +383,31 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 			luckBoostLbl.Text = `🍀 2x Luck & Cage ({formatTimer(lckUntil - now)})`
 		else
 			luckBoostPill.Visible = false
+		end
+
+		local boodleUntil = player:GetAttribute("BoodleBuffUntil")
+		if typeof(boodleUntil) == "number" and boodleUntil > now then
+			boodleBoostPill.Visible = true
+			boodleBoostLbl.Text = `🍽️ Busog & Swerte ({formatTimer(boodleUntil - now)})`
+		else
+			boodleBoostPill.Visible = false
+		end
+
+		local hasBarkada = player:GetAttribute("BarkadaComboActive") == true
+		local barkadaTitle = player:GetAttribute("BarkadaComboTitle")
+		if hasBarkada and typeof(barkadaTitle) == "string" and barkadaTitle ~= "" then
+			barkadaPill.Visible = true
+			barkadaLbl.Text = `🤝 {barkadaTitle} (+25% $/s)`
+		else
+			barkadaPill.Visible = false
+		end
+
+		local petBusogUntil = player:GetAttribute("PetBusogUntil")
+		if typeof(petBusogUntil) == "number" and petBusogUntil > now then
+			streetFoodPill.Visible = true
+			streetFoodLbl.Text = `🍡 Busog +20% $/s ({formatTimer(petBusogUntil - now)})`
+		else
+			streetFoodPill.Visible = false
 		end
 	end
 
@@ -963,6 +1025,7 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 	local lastZoneCheck = 0
 
 	RunService.Heartbeat:Connect(function()
+		local now = os.clock()
 		refreshSpeed()
 		refreshFiestaHud()
 		refreshViewportHotbar()
@@ -975,11 +1038,10 @@ function Hud.Init(screenGui: ScreenGui, callbacks: PanelCallbacks)
 			else UDim2.new(0.5, -82, 0, 0)
 
 		if chaseEdge.Visible then
-			local pulse = 0.25 + 0.55 * math.abs(math.sin(os.clock() * 5))
+			local pulse = 0.25 + 0.55 * math.abs(math.sin(now * 5))
 			edgeStroke.Transparency = pulse
 		end
 
-		local now = os.clock()
 		if now - lastZoneCheck >= 0.25 then
 			lastZoneCheck = now
 			local character = player.Character

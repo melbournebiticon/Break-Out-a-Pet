@@ -9,6 +9,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local RateLimiter = require(Shared:WaitForChild("RateLimiter"))
 local DataService = require(script.Parent:WaitForChild("DataService"))
 local InventoryService = require(script.Parent:WaitForChild("InventoryService"))
+local ShopService = require(script.Parent:WaitForChild("ShopService"))
 
 export type ActionResponse = {
 	Ok: boolean,
@@ -58,6 +59,9 @@ function PetActionService.HandleRequest(player: Player, action: any, arg1: any, 
 	elseif action == "EquipBest" then
 		local count = InventoryService.EquipBest(player)
 		return { Ok = true, Message = `⚡ Equipped your best pets ({count} placed on plot)!` }
+	elseif action == "FeedPets" then
+		local foodId = if typeof(arg1) == "string" and arg1 ~= "" then arg1 else "fishball"
+		return ShopService.FeedPetsStreetFood(player, foodId)
 	end
 
 	return { Ok = false, Message = "Unknown pet action." }

@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 
 local SoundController = require(script.Parent:WaitForChild("SoundController"))
 local VfxController = require(script.Parent:WaitForChild("VfxController"))
+local FiestaCutsceneController = require(script.Parent:WaitForChild("FiestaCutsceneController"))
 local UI = script.Parent:WaitForChild("UI")
 
 local Toasts = require(UI:WaitForChild("Toasts"))
@@ -112,6 +113,9 @@ safeInit("AbilityButton", function()
 end)
 safeInit("TutorialGuide", function()
 	TutorialGuide.Init(screenGui)
+end)
+safeInit("FiestaCutsceneController", function()
+	FiestaCutsceneController.Init(screenGui)
 end)
 
 print("[Break Out a Pet] Client UI & Controllers initialized")

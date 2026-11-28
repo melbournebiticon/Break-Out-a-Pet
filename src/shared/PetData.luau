@@ -794,6 +794,65 @@ local Pets: { [string]: Pet } = {
 		},
 		CagePrice = 65000000000000,
 	},
+	buwaya = {
+		Id = "buwaya",
+		DisplayName = "Buwaya (Lolong)",
+		Emoji = "🐊",
+		Rarity = "Epic",
+		Type = "Hybrid",
+		IncomePerSec = 420,
+		Ability = {
+			AbilityId = "scare_dogs",
+			Duration = 0,
+			Cooldown = 0,
+			Description = "Apex swamp predator — Guard Dogs are afraid and ignore you.",
+		},
+		CagePrice = 42000,
+	},
+}
+
+export type BarkadaComboDef = {
+	Id: string,
+	Title: string,
+	Emoji: string,
+	Slots: { { string } }, -- Each slot is a list of accepted petIds (e.g. normal or Titanic variant)
+	Description: string,
+}
+
+local BarkadaCombos: { BarkadaComboDef } = {
+	{
+		Id = "BukidTrio",
+		Title = "🌾 Bukid Trio",
+		Emoji = "🌾",
+		Slots = {
+			{ "kalabaw", "titanic_kalabaw" },
+			{ "aspin", "wolf" },
+			{ "chicken", "duckling" },
+		},
+		Description = "Kalabaw + Aspin + Manok (+25% Plot Income!)",
+	},
+	{
+		Id = "AlamatTrio",
+		Title = "🐉 Alamat Trio",
+		Emoji = "🐉",
+		Slots = {
+			{ "bakunawa", "titanic_bakunawa" },
+			{ "sarimanok", "titanic_sarimanok" },
+			{ "tikbalang", "minokawa" },
+		},
+		Description = "Bakunawa + Sarimanok + Tikbalang (+25% Plot Income!)",
+	},
+	{
+		Id = "DagatTrio",
+		Title = "🌊 Dagat Trio",
+		Emoji = "🌊",
+		Slots = {
+			{ "pawikan", "turtle" },
+			{ "buwaya", "bayawak", "alimango", "bangus" },
+			{ "butanding", "kraken_lord" },
+		},
+		Description = "Pawikan + Buwaya/Bayawak + Butanding (+25% Plot Income!)",
+	},
 }
 
 for id, pet in Pets do
@@ -803,9 +862,48 @@ end
 
 local PetData = {}
 PetData.Pets = Pets
+PetData.BarkadaCombos = BarkadaCombos
+PetData.BarkadaIncomeBonus = 0.25 -- +25% plot-wide income multiplier when a Barkada Combo is active
 
 function PetData.Get(id: string): Pet?
 	return Pets[id]
+end
+
+-- Checks which thematic Pinoy Barkada Combos are active given a list of placed petIds on a player's plot.
+function PetData.EvaluateBarkadaCombos(placedPetIds: { string }): (boolean, { string }, { [string]: boolean })
+	local present: { [string]: boolean } = {}
+	for _, pid in placedPetIds do
+		present[pid] = true
+	end
+
+	local activeTitles: { string } = {}
+	local memberIds: { [string]: boolean } = {}
+
+	for _, combo in BarkadaCombos do
+		local allSlotsMatched = true
+		local matchedThisCombo: { string } = {}
+		for _, allowedList in combo.Slots do
+			local slotMatched = false
+			for _, candidateId in allowedList do
+				if present[candidateId] then
+					slotMatched = true
+					table.insert(matchedThisCombo, candidateId)
+				end
+			end
+			if not slotMatched then
+				allSlotsMatched = false
+				break
+			end
+		end
+		if allSlotsMatched then
+			table.insert(activeTitles, combo.Title)
+			for _, cid in matchedThisCombo do
+				memberIds[cid] = true
+			end
+		end
+	end
+
+	return #activeTitles > 0, activeTitles, memberIds
 end
 
 local function sortedByPrice(list: { Pet }): { Pet }

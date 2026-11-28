@@ -507,6 +507,59 @@ function PetVisuals.BuildModel(petId: string, mutation: string?, centerCFrame: C
 		end
 	end
 
+	-- "Fiesta" Mutation Aura: Mini Banderitas Garland + Confetti Particle Emitter!
+	if mutation == "Fiesta" then
+		local banderitaColors = {
+			Color3.fromRGB(255, 65, 65),
+			Color3.fromRGB(255, 215, 45),
+			Color3.fromRGB(55, 210, 255),
+			Color3.fromRGB(80, 245, 120),
+			Color3.fromRGB(255, 90, 215),
+		}
+		local numFlags = 6
+		for i = 1, numFlags do
+			local angle = (i / numFlags) * math.pi * 2
+			local radius = 1.05
+			local flagPos = centerCFrame * CFrame.new(math.cos(angle) * radius, 0.95, math.sin(angle) * radius) * CFrame.Angles(0, -angle, math.rad(18))
+			local flag = makePart(
+				`FiestaBanderita_{i}`,
+				Vector3.new(0.12, 0.34, 0.42),
+				flagPos,
+				banderitaColors[((i - 1) % #banderitaColors) + 1],
+				Enum.Material.Neon,
+				model
+			)
+			weldTo(flag, body)
+		end
+
+		local confettiAtt = Instance.new("Attachment")
+		confettiAtt.Name = "FiestaConfettiAtt"
+		confettiAtt.Position = Vector3.new(0, 0.8, 0)
+		confettiAtt.Parent = body
+
+		local confetti = Instance.new("ParticleEmitter")
+		confetti.Name = "FiestaConfettiAura"
+		confetti.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 70, 95)),
+			ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 220, 55)),
+			ColorSequenceKeypoint.new(0.66, Color3.fromRGB(70, 240, 130)),
+			ColorSequenceKeypoint.new(1.0, Color3.fromRGB(80, 210, 255)),
+		})
+		confetti.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.22),
+			NumberSequenceKeypoint.new(0.7, 0.18),
+			NumberSequenceKeypoint.new(1, 0),
+		})
+		confetti.Lifetime = NumberRange.new(0.6, 1.1)
+		confetti.Rate = 12
+		confetti.Speed = NumberRange.new(2.5, 5.0)
+		confetti.SpreadAngle = Vector2.new(180, 65)
+		confetti.Acceleration = Vector3.new(0, -6, 0)
+		confetti.RotSpeed = NumberRange.new(-180, 180)
+		confetti.LightEmission = 0.65
+		confetti.Parent = confettiAtt
+	end
+
 	-- Apply dynamic Scale (Normal: 1-2.9x, Semi: 3-3.9x, Huge: 4-4.9x, Titanic: 7-9.5x, Godly: 11-12.5x)!
 	local baseScale = if info and typeof(info.Scale) == "number" and info.Scale > 0 then info.Scale else 1
 	local scale = if typeof(scaleOverride) == "number" and scaleOverride > 0
@@ -567,6 +620,21 @@ function PetVisuals.MountViewport(parent: GuiObject, petId: string, mutation: st
 	model.Parent = worldModel
 
 	return vp
+end
+
+-- Procedural CFrame bobbing/shaking offset for caged & carried pets (intensity scales by rarity in Rarities.luau).
+function PetVisuals.GetStruggleCFrame(now: number, rarityName: string?, panicMultiplier: number?): CFrame
+	local rInfo = if rarityName then Rarities.Data[rarityName] else nil
+	local order = if rInfo then rInfo.SortOrder else 1
+	local maxOrder = #Rarities.Order
+	local intensity = 0.25 + 0.75 * ((order - 1) / math.max(1, maxOrder - 1))
+	local panic = panicMultiplier or 1.0
+	local freq = (12 + intensity * 14) * math.clamp(panic, 0.75, 1.5)
+	local bobY = math.sin(now * freq) * 0.22 * intensity * panic
+	local tiltZ = math.sin(now * (freq * 0.9)) * math.rad(5 + 9 * intensity) * panic
+	local tiltX = math.cos(now * (freq * 1.1)) * math.rad(3 + 6 * intensity) * panic
+	local yawWiggle = math.sin(now * (freq * 0.65)) * math.rad(4 + 8 * intensity) * panic
+	return CFrame.new(0, -bobY, 0) * CFrame.Angles(tiltX, yawWiggle, tiltZ)
 end
 
 return PetVisuals

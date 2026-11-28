@@ -50,6 +50,10 @@ end
 function SoundController.Play(name: string)
 	local snd = getOrCreateSound(name)
 	if snd then
+		local entry = SoundData[name]
+		if entry and (name == "PamaloSlap" or name == "SipatThrow" or name == "GuardAlert" or name == "NoiseWarn") then
+			snd.PlaybackSpeed = entry.Pitch * (0.94 + math.random() * 0.12)
+		end
 		snd:Play()
 	end
 end

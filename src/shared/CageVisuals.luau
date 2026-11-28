@@ -8,7 +8,28 @@
 --   4) "RattanKaing": Woven brown bamboo/rattan Kaing basket with tied lid.
 --   5) "HaciendaBaul": Carved Narra wood & gold wrought-iron Hacienda vault cage.
 
+local Rarities = require(script.Parent:WaitForChild("Rarities"))
+
 local CageVisuals = {}
+
+-- Procedural "Cage Struggle" intensity (0.25 Common .. 1.0 Godly) used for shaking cages & carried pets.
+function CageVisuals.GetStruggleIntensity(rarityName: string?): number
+	local info = if rarityName then Rarities.Data[rarityName] else nil
+	local order = if info then info.SortOrder else 1
+	local maxOrder = #Rarities.Order
+	return 0.25 + 0.75 * ((order - 1) / math.max(1, maxOrder - 1))
+end
+
+-- Uncollected prison cages are rolled on pickup, so their struggle hint is based on how deep the Zone is.
+function CageVisuals.GetZoneStruggleIntensity(zoneName: string?, lootTable: string?): number
+	if lootTable == "Rainbow" or lootTable == "Lucky" then
+		return 0.9
+	end
+	local zoneNum = if zoneName then tonumber(string.match(zoneName, "%d+")) else nil
+	local n = zoneNum or 1
+	local rarityIdx = math.clamp(1 + math.floor((n - 1) / 2.4), 1, #Rarities.Order)
+	return CageVisuals.GetStruggleIntensity(Rarities.Order[rarityIdx])
+end
 
 local function makePart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance, shape: Enum.PartType?): Part
 	local p = Instance.new("Part")

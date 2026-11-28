@@ -73,9 +73,17 @@ end
 
 local function setCarryingState(player: Player, carryData: Carry?, zoneName: string?)
 	carrying[player] = carryData
+	local petInfo = if carryData then PetData.Get(carryData.PetId) else nil
 	player:SetAttribute("IsCarryingCage", carryData ~= nil)
 	player:SetAttribute("CageSecured", if carryData then carryData.Secured else false)
 	player:SetAttribute("CarriedCageZone", if carryData then (zoneName or player:GetAttribute("CarriedCageZone") or "") else "")
+	player:SetAttribute("CarriedPetId", if carryData then carryData.PetId else "")
+	player:SetAttribute("CarriedRarity", if petInfo then petInfo.Rarity else "")
+	if carryData then
+		player:SetAttribute("LastCarryPickupAt", workspace:GetServerTimeNow())
+		carryData.Cage:SetAttribute("CarriedByUserId", player.UserId)
+		carryData.Cage:SetAttribute("Rarity", if petInfo then petInfo.Rarity else "Common")
+	end
 end
 
 local function getHumanoidAndRoot(player: Player): (Humanoid?, BasePart?)
@@ -154,10 +162,13 @@ function CageService.AttachModelToPlayer(model: Model, root: BasePart)
 			weld.Parent = descendant
 		end
 	end
-	local carryWeld = Instance.new("WeldConstraint")
-	carryWeld.Part0 = root
-	carryWeld.Part1 = primary
-	carryWeld.Parent = primary
+	local carryMotor = Instance.new("Motor6D")
+	carryMotor.Name = "CarryMotor"
+	carryMotor.Part0 = root
+	carryMotor.Part1 = primary
+	carryMotor.C0 = CFrame.new(0, Config.CarryHeight, 0)
+	carryMotor.C1 = CFrame.new()
+	carryMotor.Parent = primary
 end
 
 -- Public API ----------------------------------------------------------------
@@ -232,9 +243,10 @@ function CageService.DropCageToGround(player: Player): boolean
 		return true
 	end
 
-	-- Remove player carry welds and anchor the cage on the ground
+	-- Remove player carry welds/motors and anchor the cage on the ground
+	droppedCage:SetAttribute("CarriedByUserId", nil)
 	for _, desc in droppedCage:GetDescendants() do
-		if desc:IsA("WeldConstraint") and (desc.Part0 == root or desc.Part1 == root) then
+		if (desc:IsA("WeldConstraint") or desc:IsA("Motor6D")) and (desc.Part0 == root or desc.Part1 == root or desc.Name == "CarryMotor") then
 			desc:Destroy()
 		elseif desc:IsA("BasePart") then
 			desc.Anchored = true
@@ -388,9 +400,13 @@ local function openUnlockedPlotCage(player: Player, cageId: string)
 	syncPlayerUnlockCages(player)
 
 	-- Roll the surprise Mutation / Semi-Titanic / Titanic right when the cage is OPENED!
+	local nowServer = workspace:GetServerTimeNow()
 	local luckUntilAttr = player:GetAttribute("FiestaLuckBoostUntil")
-	local hasFiestaLuck = typeof(luckUntilAttr) == "number" and luckUntilAttr > workspace:GetServerTimeNow()
-	local rolledMutation = MutationData.RollMutation(if hasFiestaLuck then 2.0 else 1.0)
+	local hasFiestaLuck = typeof(luckUntilAttr) == "number" and luckUntilAttr > nowServer
+	local boodleUntilAttr = player:GetAttribute("BoodleBuffUntil")
+	local hasBoodleBuff = typeof(boodleUntilAttr) == "number" and boodleUntilAttr > nowServer
+	local luckMult = (if hasFiestaLuck then 2.0 else 1.0) + (if hasBoodleBuff then 0.25 else 0.0)
+	local rolledMutation = MutationData.RollMutation(luckMult)
 
 	local pet = PetData.Get(entry.PetId)
 	if pet and entry.Model.PrimaryPart then

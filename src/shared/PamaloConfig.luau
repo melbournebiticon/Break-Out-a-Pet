@@ -2,7 +2,20 @@
 -- PamaloConfig.luau
 -- Defines the 5 Tatak Pinoy non-violent comedy slapstick Pamalo tools and builds their 3D low-poly models.
 
+-- Secondary ranged "Sipat" boomerang throw (Tsinelas variants only).
+export type SipatInfo = {
+	Range: number,
+	Speed: number,
+	ReturnSpeedMultiplier: number,
+	Cooldown: number,
+	StunSeconds: number,
+	Knockback: number,
+	HitRadius: number,
+	MaxFlightSeconds: number,
+}
+
 export type PamaloInfo = {
+	Sipat: SipatInfo?,
 	Id: string,
 	DisplayName: string,
 	Emoji: string,
@@ -34,7 +47,17 @@ local Tools: { [string]: PamaloInfo } = {
 		RagdollSeconds = 1.1,
 		SpeedBoostMult = 1.0,
 		SpeedBoostSeconds = 0,
-		Description = "Starter Pinoy rubber slipper! Slaps players face-down & drops cages!",
+		Description = "Starter Pinoy rubber slipper! Slaps players face-down & drops cages! Right-click / R to SIPAT (throw)!",
+		Sipat = {
+			Range = 38,
+			Speed = 70,
+			ReturnSpeedMultiplier = 1.2,
+			Cooldown = 4.0,
+			StunSeconds = 1.6,
+			Knockback = 22,
+			HitRadius = 2.2,
+			MaxFlightSeconds = 3.5,
+		},
 	},
 	nakarolyong_dyaryo = {
 		Id = "nakarolyong_dyaryo",
@@ -98,7 +121,17 @@ local Tools: { [string]: PamaloInfo } = {
 		RagdollSeconds = 1.8,
 		SpeedBoostMult = 1.25,
 		SpeedBoostSeconds = 2.0,
-		Description = "Legendary Golden Slipper! Massive knockback + 25% speed boost on hit!",
+		Description = "Legendary Golden Slipper! Massive knockback + 25% speed boost on hit! Right-click / R to SIPAT (throw)!",
+		Sipat = {
+			Range = 52,
+			Speed = 90,
+			ReturnSpeedMultiplier = 1.3,
+			Cooldown = 2.5,
+			StunSeconds = 2.4,
+			Knockback = 34,
+			HitRadius = 2.8,
+			MaxFlightSeconds = 3.5,
+		},
 	},
 }
 
@@ -117,6 +150,14 @@ local PamaloConfig = {
 
 function PamaloConfig.Get(id: string): PamaloInfo?
 	return Tools[id]
+end
+
+function PamaloConfig.GetSipat(id: string?): SipatInfo?
+	if not id then
+		return nil
+	end
+	local info = Tools[id]
+	return if info then info.Sipat else nil
 end
 
 local function makeSubPart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance, anchored: boolean): Part

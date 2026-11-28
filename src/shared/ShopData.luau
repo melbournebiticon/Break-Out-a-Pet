@@ -362,7 +362,92 @@ local ShopData = {
 		},
 	},
 	SellMultiplier = 0.5,
+
+	-- Street Food Feeding ("Alaga & Pakain") -> Triggers 10-minute "Busog Mode" (+20% $/s tick rate!)
+	BusogIncomeMultiplier = 1.20,
+	StreetFoods = {
+		fishball = {
+			Id = "fishball",
+			DisplayName = "Tusok-Tusok Fishball",
+			Emoji = "🍡",
+			Cost = 500,
+			DurationSeconds = 600, -- 10 minutes
+			Description = "Crispy golden street fishballs in sweet-spicy manong sauce! Triggers 10m Busog Mode (+20% $/s)!",
+		},
+		kwek_kwek = {
+			Id = "kwek_kwek",
+			DisplayName = "Kwek-Kwek & Pipino",
+			Emoji = "🟠",
+			Cost = 3500,
+			DurationSeconds = 600,
+			Description = "Orange-battered quail eggs with cucumber vinegar! Triggers 10m Busog Mode (+20% $/s) + Instant Joy!",
+		},
+		banana_cue = {
+			Id = "banana_cue",
+			DisplayName = "Caramel Banana Cue",
+			Emoji = "🍌",
+			Cost = 25000,
+			DurationSeconds = 600,
+			Description = "Skewered Saba bananas coated in crunchy brown sugar caramel! Triggers 10m Busog Mode (+20% $/s)!",
+		},
+		halo_halo = {
+			Id = "halo_halo",
+			DisplayName = "Espesyal Halo-Halo",
+			Emoji = "🍧",
+			Cost = 150000,
+			DurationSeconds = 600,
+			Description = "Shaved ice topped with leche flan & ube halaya! Triggers 10m Busog Mode (+20% $/s)!",
+		},
+	},
+	StreetFoodOrder = { "fishball", "kwek_kwek", "banana_cue", "halo_halo" },
+
+	-- Plot Evolution Architecture Tiers (auto-evolves player plot based on $/s or Cash milestones!)
+	PlotEvolutionTiers = {
+		[1] = {
+			Tier = 1,
+			Title = "🛖 Kawayan Bakod & Nipa Hut (Kubo)",
+			MinIncomePerSec = 0,
+			MinMoney = 0,
+			AccentColor = Color3.fromRGB(165, 225, 110),
+		},
+		[2] = {
+			Tier = 2,
+			Title = "🏛️ Bahay na Bato Courtyard",
+			MinIncomePerSec = 25000,
+			MinMoney = 250000,
+			AccentColor = Color3.fromRGB(255, 205, 85),
+		},
+		[3] = {
+			Tier = 3,
+			Title = "👑 Intramuros Royal Courtyard",
+			MinIncomePerSec = 5000000,
+			MinMoney = 50000000,
+			AccentColor = Color3.fromRGB(255, 145, 220),
+		},
+	},
 }
+
+export type StreetFoodInfo = {
+	Id: string,
+	DisplayName: string,
+	Emoji: string,
+	Cost: number,
+	DurationSeconds: number,
+	Description: string,
+}
+
+function ShopData.GetStreetFood(foodId: string): StreetFoodInfo?
+	return (ShopData.StreetFoods :: { [string]: StreetFoodInfo })[foodId]
+end
+
+function ShopData.GetPlotEvolutionTier(incomePerSec: number, money: number): number
+	if incomePerSec >= 5000000 or money >= 50000000 then
+		return 3
+	elseif incomePerSec >= 25000 or money >= 250000 then
+		return 2
+	end
+	return 1
+end
 
 function ShopData.GetTreadmillTierInfo(trainerLevel: number)
 	local clamped = math.clamp(math.floor(trainerLevel), 0, ShopData.Speed.MaxLevel)

@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local PetData = require(Shared:WaitForChild("PetData"))
+local ShopData = require(Shared:WaitForChild("ShopData"))
 local MutationData = require(Shared:WaitForChild("MutationData"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
 local DataService = require(script.Parent:WaitForChild("DataService"))
@@ -169,6 +170,23 @@ local function setupPlayer(player: Player)
 end
 
 function EconomyService.Init()
+	-- 1) Pet "Barkada Combo" Synergy (+25% plot-wide income multiplier when Bukid/Alamat/Dagat Trio is deployed!)
+	EconomyService.AddMultiplierProvider("BarkadaComboSynergy", function(player: Player): number
+		if player:GetAttribute("BarkadaComboActive") == true then
+			return 1 + PetData.BarkadaIncomeBonus
+		end
+		return 1.0
+	end)
+
+	-- 2) Street Food "Busog Mode" (+20% $/s tick rate for 10 minutes after feeding pets Fishball/Kwek-Kwek/Banana Cue/Halo-Halo!)
+	EconomyService.AddMultiplierProvider("StreetFoodBusogMode", function(player: Player): number
+		local untilAttr = player:GetAttribute("PetBusogUntil")
+		if typeof(untilAttr) == "number" and untilAttr > workspace:GetServerTimeNow() then
+			return ShopData.BusogIncomeMultiplier
+		end
+		return 1.0
+	end)
+
 	Players.PlayerAdded:Connect(function(player)
 		task.spawn(setupPlayer, player)
 	end)

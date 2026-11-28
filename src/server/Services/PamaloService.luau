@@ -8,11 +8,14 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local PamaloConfig = require(Shared:WaitForChild("PamaloConfig"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
+local RateLimiter = require(Shared:WaitForChild("RateLimiter"))
 local DataService = require(script.Parent:WaitForChild("DataService"))
 local EconomyService = require(script.Parent:WaitForChild("EconomyService"))
 local InventoryService = require(script.Parent:WaitForChild("InventoryService"))
@@ -20,17 +23,31 @@ local StatsService = require(script.Parent:WaitForChild("StatsService"))
 local CageService = require(script.Parent:WaitForChild("CageService"))
 local EnemyService = require(script.Parent:WaitForChild("EnemyService"))
 local StealService = require(script.Parent:WaitForChild("StealService"))
+local FiestaPlazaService = require(script.Parent:WaitForChild("FiestaPlazaService"))
 local ClientSyncService = require(script.Parent:WaitForChild("ClientSyncService"))
 
 local PamaloService = {}
 
 local lastSwingAt: { [Player]: number } = {}
+local lastSipatAt: { [Player]: number } = {}
+local activeSipatFlight: { [Player]: boolean } = {}
 local boostActiveUntil: { [Player]: number } = {}
 local boostMultiplier: { [Player]: number } = {}
 local bangusDodgeReadyAt: { [Player]: number } = {}
 local pawikanShieldReadyAt: { [Player]: number } = {}
 local kalabawFirstHitAt: { [Player]: number } = {}
 local setupDone: { [Instance]: boolean } = {}
+
+local COMIC_SLAP_WORDS = { "💥 PAK!", "🩴 ARAY!", "💫 TSINELAS!", "💥 BOGSH!" }
+local comicWordIdx = 0
+
+local function nextComicWord(info: PamaloConfig.PamaloInfo): string
+	comicWordIdx = (comicWordIdx % #COMIC_SLAP_WORDS) + 1
+	if info.Id == "tsinelas_spartan" or info.Id == "gintong_tsinelas" then
+		return COMIC_SLAP_WORDS[comicWordIdx]
+	end
+	return if comicWordIdx % 2 == 0 then `💥 ARAY! ({info.Emoji})` else `💥 PAK! ({info.Emoji})`
+end
 
 local function getHumanoidAndRoot(player: Player): (Humanoid?, BasePart?)
 	local character = player.Character
@@ -255,14 +272,40 @@ local function onPamaloSwung(player: Player, tool: Tool, info: PamaloConfig.Pama
 	local flatLook = Vector3.new(look.X, 0, look.Z)
 	local unitLook = if flatLook.Magnitude > 0.01 then flatLook.Unit else Vector3.new(0, 0, -1)
 
+	-- Check Fiesta Plaza Minigame targets (Hampas Palayok, Agawan Biik & Rival Plaza Slap) first!
+	local fiestaHit, fiestaHitPos = FiestaPlazaService.RegisterPamaloHit(player, attackerPos, unitLook, info.Reach, info)
+	if fiestaHit then
+		Remotes.GetEvent("PamaloVfx"):FireClient(player, "Swing", info.Id, true, fiestaHitPos)
+		return
+	end
+
 	-- Strictly disabled inside the Safe Zone (Z > Config.SafeZoneZ)!
 	if attackerPos.Z > Config.SafeZoneZ then
+		Remotes.GetEvent("PamaloVfx"):FireClient(player, "Swing", info.Id, false)
 		return
 	end
 
 	local landedHit = false
+	local firstHitPos: Vector3? = nil
 
-	-- Player vs. Other Players ONLY (only inside the danger zones, Z <= Config.SafeZoneZ)
+	-- 1) Player vs. Guard NPCs & Guard Dogs (stuns + spin-knockdown + comic popup!)
+	local hitEnemyHeads = EnemyService.SlapEnemiesInCone(
+		attackerPos,
+		unitLook,
+		info.Reach,
+		info.Knockback,
+		info.GuardStun,
+		info.IsAoE
+	)
+	for _, enemyHead in hitEnemyHeads do
+		landedHit = true
+		if not firstHitPos then
+			firstHitPos = enemyHead.Position
+		end
+		spawnComedyPopup(enemyHead, nextComicWord(info), Color3.fromRGB(255, 215, 45))
+	end
+
+	-- 2) Player vs. Other Players (only inside the danger zones, Z <= Config.SafeZoneZ)
 	for _, other in Players:GetPlayers() do
 		if other ~= player then
 			local _, oRoot = getHumanoidAndRoot(other)
@@ -276,6 +319,9 @@ local function onPamaloSwung(player: Player, tool: Tool, info: PamaloConfig.Pama
 					if dist <= 3.5 or dot >= (if info.IsAoE then 0.15 else 0.35) then
 						if applyPlayerSlap(player, other, info, dir) then
 							landedHit = true
+							if not firstHitPos then
+								firstHitPos = oRoot.Position
+							end
 							if not info.IsAoE then
 								break
 							end
@@ -285,6 +331,8 @@ local function onPamaloSwung(player: Player, tool: Tool, info: PamaloConfig.Pama
 			end
 		end
 	end
+
+	Remotes.GetEvent("PamaloVfx"):FireClient(player, "Swing", info.Id, landedHit, firstHitPos)
 
 	-- 3) Gintong Tsinelas Speed Boost on Hit
 	if landedHit and info.SpeedBoostSeconds > 0 and info.SpeedBoostMult > 1 then
@@ -297,6 +345,246 @@ local function onPamaloSwung(player: Player, tool: Tool, info: PamaloConfig.Pama
 			end
 		end)
 	end
+end
+
+local function findPlayerPamaloTool(player: Player): (Tool?, PamaloConfig.PamaloInfo?)
+	local character = player.Character
+	local backpack = player:FindFirstChildOfClass("Backpack")
+	for _, container in { character, backpack } do
+		if container then
+			for _, child in container:GetChildren() do
+				if child:IsA("Tool") and child:GetAttribute("IsPamalo") == true then
+					local id = tostring(child:GetAttribute("PamaloId") or "")
+					local info = PamaloConfig.Get(id)
+					if info then
+						return child, info
+					end
+				end
+			end
+		end
+	end
+	return nil, nil
+end
+
+local function setToolPartsHidden(tool: Tool?, hidden: boolean)
+	if not tool then
+		return
+	end
+	for _, desc in tool:GetDescendants() do
+		if desc:IsA("BasePart") then
+			desc.LocalTransparencyModifier = if hidden then 1 else 0
+			desc.Transparency = if hidden then 1 else 0
+		end
+	end
+end
+
+-- Secondary Ranged Tsinelas Throw ("Sipat") with Boomerang Return!
+local function onSipatRequested(player: Player, rawAimDir: any)
+	if activeSipatFlight[player] then
+		return
+	end
+	local tool, info = findPlayerPamaloTool(player)
+	if not info or not info.Sipat then
+		return
+	end
+	local sipat = info.Sipat
+
+	local now = os.clock()
+	local prev = lastSipatAt[player] or 0
+	if (now - prev) < (sipat.Cooldown - 0.05) then
+		return
+	end
+
+	local hum, root = getHumanoidAndRoot(player)
+	if not hum or not root or hum.Health <= 0 then
+		return
+	end
+
+	-- Cannot throw inside the Safe Zone Plaza unless throwing toward the prison border OR participating in a Fiesta Plaza event!
+	if root.Position.Z > Config.SafeZoneZ + 8 and not FiestaPlazaService.IsPositionInPlaza(root.Position) then
+		ClientSyncService.Notify(player, "🩴 Enter a Danger Zone or the Fiesta Plaza to throw your Tsinelas (Sipat)!", Color3.fromRGB(255, 195, 65))
+		return
+	end
+
+	lastSipatAt[player] = now
+	activeSipatFlight[player] = true
+	player:SetAttribute("SipatReadyAt", workspace:GetServerTimeNow() + sipat.Cooldown)
+
+	local look = root.CFrame.LookVector
+	if typeof(rawAimDir) == "Vector3" and rawAimDir.Magnitude > 0.05 then
+		local candidate = Vector3.new(rawAimDir.X, math.clamp(rawAimDir.Y, -0.35, 0.35), rawAimDir.Z)
+		if candidate.Magnitude > 0.05 then
+			look = candidate.Unit
+		end
+	else
+		local flat = Vector3.new(look.X, 0, look.Z)
+		look = if flat.Magnitude > 0.05 then flat.Unit else Vector3.new(0, 0, -1)
+	end
+
+	if tool and tool.Parent == player.Character then
+		local animTag = Instance.new("StringValue")
+		animTag.Name = "toolanim"
+		animTag.Value = "Slash"
+		animTag.Parent = tool
+	end
+	setToolPartsHidden(tool, true)
+
+	local startPos = root.Position + Vector3.new(0, 1.35, 0) + look * 1.8
+	local projModel = Instance.new("Model")
+	projModel.Name = `SipatProjectile_{player.Name}`
+	local projHandle = PamaloConfig.BuildToolParts(info.Id, CFrame.lookAt(startPos, startPos + look), projModel, true)
+	projModel.PrimaryPart = projHandle
+
+	-- Enable vibrant boomerang flight trail on the spinning tsinelas
+	local att0 = Instance.new("Attachment")
+	att0.Position = Vector3.new(0, -0.7, 0)
+	att0.Parent = projHandle
+	local att1 = Instance.new("Attachment")
+	att1.Position = Vector3.new(0, 0.7, 0)
+	att1.Parent = projHandle
+	local flightTrail = Instance.new("Trail")
+	flightTrail.Attachment0 = att0
+	flightTrail.Attachment1 = att1
+	flightTrail.Lifetime = 0.22
+	flightTrail.FaceCamera = true
+	flightTrail.LightEmission = 0.9
+	flightTrail.Color = ColorSequence.new(
+		if info.Id == "gintong_tsinelas" then Color3.fromRGB(255, 220, 65) else Color3.fromRGB(95, 200, 255)
+	)
+	flightTrail.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.1),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	flightTrail.Parent = projHandle
+	projModel.Parent = workspace
+
+	Remotes.GetEvent("PamaloVfx"):FireClient(player, "SipatThrow", info.Id)
+
+	local currentPos = startPos
+	local traveled = 0
+	local returning = false
+	local spinAngle = 0
+	local startedAt = os.clock()
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	local excludeList: { Instance } = { projModel }
+	if player.Character then
+		table.insert(excludeList, player.Character)
+	end
+	local enemiesFolder = workspace:FindFirstChild("Enemies")
+	if enemiesFolder then
+		table.insert(excludeList, enemiesFolder)
+	end
+	rayParams.FilterDescendantsInstances = excludeList
+
+	local conn: RBXScriptConnection
+	local function finishFlight()
+		if conn then
+			conn:Disconnect()
+		end
+		activeSipatFlight[player] = nil
+		if projModel.Parent then
+			projModel:Destroy()
+		end
+		setToolPartsHidden(tool, false)
+	end
+
+	conn = RunService.Heartbeat:Connect(function(dt: number)
+		if (os.clock() - startedAt) >= sipat.MaxFlightSeconds or not player.Parent then
+			finishFlight()
+			return
+		end
+
+		spinAngle += dt * 28
+		if not returning then
+			local stepDist = sipat.Speed * dt
+			local wallHit = workspace:Raycast(currentPos, look * stepDist, rayParams)
+			if wallHit then
+				currentPos = wallHit.Position - look * 0.4
+				returning = true
+			else
+				currentPos += look * stepDist
+				traveled += stepDist
+			end
+
+			-- Check Fiesta Plaza targets (Palayok / Biik) or Guard NPC hit first!
+			local fiestaHit, fiestaHitPos = FiestaPlazaService.RegisterPamaloHit(player, currentPos, look, sipat.HitRadius, info)
+			if fiestaHit then
+				Remotes.GetEvent("PamaloVfx"):FireClient(player, "SipatHit", fiestaHitPos or currentPos, info.Id)
+				returning = true
+			else
+				local hitEnemyHead = EnemyService.SlapNearestEnemyAtPoint(
+					currentPos,
+					sipat.HitRadius,
+					sipat.Knockback,
+					sipat.StunSeconds,
+					look
+				)
+				if hitEnemyHead then
+					spawnComedyPopup(hitEnemyHead, "🩴 SAPUL! TSINELAS!", Color3.fromRGB(255, 220, 55))
+					Remotes.GetEvent("PamaloVfx"):FireClient(player, "SipatHit", hitEnemyHead.Position, info.Id)
+					if info.SpeedBoostSeconds > 0 and info.SpeedBoostMult > 1 then
+						boostActiveUntil[player] = os.clock() + info.SpeedBoostSeconds
+						boostMultiplier[player] = info.SpeedBoostMult
+						StatsService.Refresh(player)
+						task.delay(info.SpeedBoostSeconds, function()
+							if player.Parent then
+								StatsService.Refresh(player)
+							end
+						end)
+					end
+					returning = true
+				elseif currentPos.Z <= Config.SafeZoneZ then
+					-- Optional player hit in danger zones if no Guard was struck
+					for _, other in Players:GetPlayers() do
+						if other ~= player then
+							local _, oRoot = getHumanoidAndRoot(other)
+							if oRoot and oRoot.Position.Z <= Config.SafeZoneZ then
+								local dist = (oRoot.Position - currentPos).Magnitude
+								if dist <= sipat.HitRadius + 1.4 then
+									if applyPlayerSlap(player, other, info, Vector3.new(look.X, 0, look.Z).Unit) then
+										Remotes.GetEvent("PamaloVfx"):FireClient(player, "SipatHit", oRoot.Position, info.Id)
+										returning = true
+										break
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+
+			if traveled >= sipat.Range then
+				returning = true
+			end
+		else
+			local _, ownerRoot = getHumanoidAndRoot(player)
+			if not ownerRoot then
+				finishFlight()
+				return
+			end
+			local targetPos = ownerRoot.Position + Vector3.new(0, 1.2, 0)
+			local toOwner = targetPos - currentPos
+			local dist = toOwner.Magnitude
+			local returnStep = sipat.Speed * sipat.ReturnSpeedMultiplier * dt
+			if dist <= math.max(2.2, returnStep) then
+				finishFlight()
+				return
+			end
+			local retDir = toOwner.Unit
+			-- Subtle sideways boomerang arc on return
+			local side = retDir:Cross(Vector3.new(0, 1, 0))
+			local curveOffset = side * math.sin(math.clamp(dist / sipat.Range, 0, 1) * math.pi) * 0.18
+			currentPos += (retDir + curveOffset).Unit * returnStep
+		end
+
+		if projModel.Parent then
+			projModel:PivotTo(
+				CFrame.new(currentPos)
+					* CFrame.Angles(math.rad(90), spinAngle, math.rad(18))
+			)
+		end
+	end)
 end
 
 local function giveEquippedPamaloTool(player: Player)
@@ -338,6 +626,7 @@ local function giveEquippedPamaloTool(player: Player)
 
 	PamaloConfig.BuildToolParts(info.Id, CFrame.new(), tool, false)
 	tool.Grip = CFrame.new(0, -0.65, 0)
+	player:SetAttribute("EquippedPamaloId", info.Id)
 
 	tool.Activated:Connect(function()
 		onPamaloSwung(player, tool, info)
@@ -442,6 +731,15 @@ local function watchPlayer(player: Player)
 end
 
 function PamaloService.Init()
+	Remotes.GetEvent("PamaloVfx")
+	local sipatEvent = Remotes.GetEvent("PamaloSipat")
+	sipatEvent.OnServerEvent:Connect(function(player: Player, rawAimDir: any)
+		if not RateLimiter.Check(player, "PamaloSipat", 0.25) then
+			return
+		end
+		onSipatRequested(player, rawAimDir)
+	end)
+
 	StatsService.AddSpeedModifier("PamaloBoost", function(player: Player): number
 		local untilTime = boostActiveUntil[player]
 		if untilTime and os.clock() < untilTime then
@@ -464,6 +762,8 @@ function PamaloService.Init()
 
 	Players.PlayerRemoving:Connect(function(player)
 		lastSwingAt[player] = nil
+		lastSipatAt[player] = nil
+		activeSipatFlight[player] = nil
 		boostActiveUntil[player] = nil
 		boostMultiplier[player] = nil
 		bangusDodgeReadyAt[player] = nil
